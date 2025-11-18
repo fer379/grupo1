@@ -1,7 +1,9 @@
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from abc import ABC, abstractmethod
 from modelo_orm import db
+
 
 
 class GestionarObra(ABC):
@@ -51,7 +53,9 @@ class Gestion(GestionarObra):
         return self.df
 
 
+
     def limpiar_datos(self):
+        """Normaliza texto, fechas, números y NaN."""
         if self.df is None:
             raise RuntimeError("Primero ejecutá extraer_datos()")
 
@@ -285,4 +289,3 @@ def nueva_obra(self):
     print(f"ID asignado: {obra.id}")
 
     return obra
-
