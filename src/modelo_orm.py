@@ -49,6 +49,76 @@ class Obra(BaseModel):
     mano_obra = IntegerField(null=True)
     destacada = BooleanField(default=False)
 
+    @classmethod
+    def cargar_csv(cls, ruta_csv: str):
+        """
+        Carga todas las filas del CSV y las convierte en instancias Obra,
+        creando automáticamente las FK necesarias (área, empresa, barrio, etc.)
+        """
+        import pandas as pd
+
+        df = pd.read_csv(ruta_csv, encoding="latin1", sep=";", low_memory=False)
+
+        obras_creadas = []
+
+        for _, fila in df.iterrows():
+
+            # Obtener o crear claves foráneas
+            area, _ = AreaResponsable.get_or_create(
+                nombre=str(fila.get("area_responsable")).strip()
+            ) if fila.get("area_responsable") else (None, False)
+
+            tipo, _ = TipoObra.get_or_create(
+                nombre=str(fila.get("tipo_obra")).strip()
+            ) if fila.get("tipo_obra") else (None, False)
+
+            barrio, _ = Barrio.get_or_create(
+                nombre=str(fila.get("barrio")).strip(),
+                defaults={"comuna": fila.get("comuna")}
+            ) if fila.get("barrio") else (None, False)
+
+            etapa, _ = Etapa.get_or_create(
+                nombre=str(fila.get("etapa")).strip()
+            ) if fila.get("etapa") else (None, False)
+
+            empresa, _ = Empresa.get_or_create(
+                nombre=str(fila.get("empresa")).strip()
+            ) if fila.get("empresa") else (None, False)
+
+            tipo_contra, _ = TipoContratacion.get_or_create(
+                nombre=str(fila.get("tipo_contratacion")).strip()
+            ) if fila.get("tipo_contratacion") else (None, False)
+
+            fuente, _ = FuenteFinanciamiento.get_or_create(
+                nombre=str(fila.get("fuente_financiamiento")).strip()
+            ) if fila.get("fuente_financiamiento") else (None, False)
+
+            # Crear obra
+            obra = cls.create(
+                expediente=fila.get("expediente"),
+                descripcion=fila.get("descripcion"),
+
+                area_responsable=area,
+                tipo_obra=tipo,
+                barrio=barrio,
+                etapa=etapa,
+                empresa=empresa,
+                tipo_contratacion=tipo_contra,
+                fuente_financiamiento=fuente,
+
+                monto=fila.get("monto_contrato"),
+                fecha_inicio=fila.get("fecha_inicio"),
+                fecha_fin_inicial=fila.get("fecha_fin"),
+                porcentaje_avance=fila.get("avance_fisico") or 0,
+                plazo_meses=fila.get("plazo_actualizado"),
+                mano_obra=fila.get("mano_obra"),
+                destacada=fila.get("destacada") is True
+            )
+
+            obras_creadas.append(obra)
+
+        return obras_creadas
+
     # Métodos de instancia para etapas (se implementan en este archivo o en otro)
     def nuevo_proyecto(self):
         etapa, _ = Etapa.get_or_create(nombre="Proyecto")

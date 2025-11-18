@@ -1,30 +1,17 @@
 from pathlib import Path
 import pandas as pd
-from abc import ABC, abstractmethod
+from gestionar_obras import GestionarObra
 from modelo_orm import db
 
 
-class GestionarObra(ABC):
-    def __init__(self):
-        self.df = None
+class gestion(GestionarObra):
 
-    @abstractmethod
-    def extraer_datos(self):
-        pass
-
-    @abstractmethod
-    def limpiar_datos(self):
-        pass
-
-
-
-
-class Gestion(GestionarObra):
     def __init__(self):
         super().__init__()
 
+
     def conectar_db(self):
-        """Conecta a la base SQLite en /data."""
+        """Conecta a la base de datos SQLite obras_urbanas.db."""
         raiz = Path(__file__).resolve().parent.parent
         archivo_db = raiz / "data" / "obras_urbanas.db"
 
@@ -33,9 +20,8 @@ class Gestion(GestionarObra):
         if db.is_closed():
             db.connect()
 
-        print(f" Base de datos conectada en: {archivo_db}")
+        print(f"📌 Base de datos conectada en: {archivo_db}")
         return db
-
 
 
     def extraer_datos(self):
@@ -49,7 +35,6 @@ class Gestion(GestionarObra):
             low_memory=False
         )
         return self.df
-
 
     def limpiar_datos(self):
         if self.df is None:
@@ -93,7 +78,9 @@ class Gestion(GestionarObra):
                 df[c] = df[c].astype(str).str.replace(",", ".", regex=False)
                 df[c] = pd.to_numeric(df[c], errors="coerce")
 
-        columnas_booleanas = ['tiene_impacto_ambiental', 'posee_proyecto']
+        columnas_booleanas = [
+            'tiene_impacto_ambiental', 'posee_proyecto'
+        ]
 
         for c in columnas_booleanas:
             if c in df.columns:
@@ -107,23 +94,36 @@ class Gestion(GestionarObra):
         return df
 
 
-    def mapear_orm(self):
-        self.conectar_db()
+def mapear_orm(self):
+    """Crea la estructura de tablas de la base de datos usando Peewee ORM"""
 
-        from modelo_orm import (
-            AreaResponsable, TipoObra, Barrio, Etapa,
-            Empresa, TipoContratacion, FuenteFinanciamiento, Obra
-        )
+    # conexión
+    self.conectar_db()
 
-        db.create_tables([
-            AreaResponsable, TipoObra, Barrio, Etapa,
-            Empresa, TipoContratacion, FuenteFinanciamiento, Obra
-        ])
+    #  Importar modelos del ORM
+    from modelo_orm import (
+        AreaResponsable, TipoObra, Barrio, Etapa,
+        Empresa, TipoContratacion, FuenteFinanciamiento, Obra
+    )
 
-        print(" Tablas creadas correctamente en la base de datos.")
+    #  Crear tablas
+    db.create_tables([
+        AreaResponsable, TipoObra, Barrio, Etapa,
+        Empresa, TipoContratacion, FuenteFinanciamiento, Obra
+    ])
+
+    print("📌 Tablas ORM creadas correctamente en la base de datos.")
 
 
+ 
+    
     def cargar_datos(self):
+        """
+        Carga el contenido del DataFrame limpio a la base de datos.
+        Usa get_or_create para claves foráneas.
+        Evita duplicados por expediente.
+        No detiene la carga por errores.
+        """
         from modelo_orm import (
             AreaResponsable, TipoObra, Barrio, Etapa,
             Empresa, TipoContratacion, FuenteFinanciamiento, Obra
@@ -141,17 +141,25 @@ class Gestion(GestionarObra):
         errores = 0
 
         for i, fila in df.iterrows():
+
             try:
+                # -------------------------
+                # Limpieza rápida
+                # -------------------------
                 clean = lambda v: None if pd.isna(v) or v == "" else v
                 fila = fila.map(clean)
 
+                # -------------------------
+                # Evitar duplicados por expediente
+                # -------------------------
                 expediente = fila.get("expediente")
 
                 if expediente:
                     existente = Obra.select().where(Obra.expediente == expediente).first()
                     if existente:
-                        print(f" Fila {i}: Ya existe obra con expediente {expediente} → se omite.")
+                        print(f"⚠️ Fila {i}: Ya existe obra con expediente {expediente} → se omite.")
                         continue
+
 
                 area, _ = AreaResponsable.get_or_create(
                     nombre=fila.get("area_responsable") or "NO INFORMADO"
@@ -182,6 +190,7 @@ class Gestion(GestionarObra):
                     nombre=fila.get("fuente_financiamiento") or "Sin dato"
                 )
 
+
                 Obra.create(
                     expediente=expediente,
                     descripcion=fila.get("descripcion"),
@@ -210,79 +219,107 @@ class Gestion(GestionarObra):
                 errores += 1
                 print(f" Error en fila {i}: {e}")
 
-
+        print("===================================")
         print(f" Obras insertadas: {cargadas}")
         print(f" Filas con error: {errores}")
+        print("===================================")
 def nueva_obra(self):
-
+    """
+    Carga manualmente una nueva obra desde la consola.
+    Crea o usa claves foráneas según corresponda.
+    """
     from modelo_orm import (
         AreaResponsable, TipoObra, Barrio, Etapa,
         Empresa, TipoContratacion, FuenteFinanciamiento, Obra
     )
 
-    self.conectar_db()
+    print("\n=== Crear nueva obra ===")
 
-    print("\n=== CREAR NUEVA OBRA ===")
+    # -------- Entrada de datos --------
+    expediente = input("Expediente (obligatorio, único): ").strip()
+    if expediente == "":
+        print(" El expediente no puede estar vacío.")
+        return
 
+    # Verificar duplicado
+    duplicado = Obra.select().where(Obra.expediente == expediente).first()
+    if duplicado:
+        print(f" Ya existe una obra con expediente {expediente}.")
+        return
 
-    expediente = input("Ingrese expediente: ").strip()
-    descripcion = input("Ingrese descripción: ").strip()
+    descripcion = input("Descripción: ").strip() or None
 
+    area = input("Área responsable: ").strip() or "NO INFORMADO"
+    tipo = input("Tipo de obra: ").strip() or "NO INFORMADO"
+    barrio_nombre = input("Barrio: ").strip() or "DESCONOCIDO"
+    comuna_input = input("Comuna (número): ").strip()
+    empresa_nombre = input("Empresa: ").strip() or "NO INFORMADA"
+    etapa_nombre = input("Etapa (Planificada / Ejecución / Finalizada): ").strip() or "Sin etapa"
+    tipo_contra_nombre = input("Tipo de contratación: ").strip() or "Sin dato"
+    fuente_fin = input("Fuente de financiamiento: ").strip() or "Sin dato"
 
+    monto = input("Monto del contrato: ").replace(",", ".").strip()
+    monto = float(monto) if monto not in ["", None] else None
 
-    def pedir_fk(modelo, campo_nombre):
-
-        while True:
-            valor = input(f"Ingrese {campo_nombre}: ").strip()
-
-            instancia = modelo.get_or_none(modelo.nombre == valor)
-
-            if instancia:
-                return instancia
-
-            print(f" {campo_nombre} '{valor}' no existe. Intente nuevamente.\n")
-
-    area = pedir_fk(AreaResponsable, "Área Responsable")
-    tipo = pedir_fk(TipoObra, "Tipo de Obra")
-    barrio = pedir_fk(Barrio, "Barrio")
-    etapa = pedir_fk(Etapa, "Etapa")
-    empresa = pedir_fk(Empresa, "Empresa")
-    tipo_contra = pedir_fk(TipoContratacion, "Tipo de Contratación")
-    fuente = pedir_fk(FuenteFinanciamiento, "Fuente de Financiamiento")
-
-
-    try:
-        monto = float(input("Monto del contrato: "))
-    except:
-        monto = None
+    fecha_ini = input("Fecha inicio (YYYY-MM-DD): ").strip()
+    fecha_fin = input("Fecha fin inicial (YYYY-MM-DD): ").strip()
 
     try:
-        avance = int(input("Porcentaje de avance: "))
+        fecha_ini = pd.to_datetime(fecha_ini).date() if fecha_ini else None
+        fecha_fin = pd.to_datetime(fecha_fin).date() if fecha_fin else None
     except:
-        avance = 0
+        print(" Error: formato de fecha inválido.")
+        return
 
-    destacada = input("¿Es destacada? (SI/NO): ").upper() in ["SI", "SÍ", "TRUE"]
+    avance = input("Avance físico (%): ").strip()
+    avance = int(avance) if avance.isdigit() else 0
 
+    plazo = input("Plazo (meses): ").strip()
+    plazo = int(plazo) if plazo.isdigit() else None
 
-    obra = Obra(
+    mano_obra = input("Mano de obra asignada: ").strip()
+    mano_obra = int(mano_obra) if mano_obra.isdigit() else None
+
+    destacada = input("¿Es destacada? (si/no): ").strip().lower()
+    destacada = True if destacada in ["si", "sí", "true"] else False
+
+    # -------- Claves foráneas --------
+    area_obj, _ = AreaResponsable.get_or_create(nombre=area)
+    tipo_obj, _ = TipoObra.get_or_create(nombre=tipo)
+    barrio_obj, _ = Barrio.get_or_create(nombre=barrio_nombre,
+                                         defaults={"comuna": comuna_input or None})
+    etapa_obj, _ = Etapa.get_or_create(nombre=etapa_nombre)
+    empresa_obj, _ = Empresa.get_or_create(nombre=empresa_nombre)
+    contra_obj, _ = TipoContratacion.get_or_create(nombre=tipo_contra_nombre)
+    fuente_obj, _ = FuenteFinanciamiento.get_or_create(nombre=fuente_fin)
+
+    # -------- Crear obra --------
+    obra = Obra.create(
         expediente=expediente,
         descripcion=descripcion,
-        area_responsable=area,
-        tipo_obra=tipo,
-        barrio=barrio,
-        etapa=etapa,
-        empresa=empresa,
-        tipo_contratacion=tipo_contra,
-        fuente_financiamiento=fuente,
+
+        area_responsable=area_obj,
+        tipo_obra=tipo_obj,
+        barrio=barrio_obj,
+        etapa=etapa_obj,
+        empresa=empresa_obj,
+        tipo_contratacion=contra_obj,
+        fuente_financiamiento=fuente_obj,
+
         monto=monto,
         porcentaje_avance=avance,
+        mano_obra=mano_obra,
+        fecha_inicio=fecha_ini,
+        fecha_fin_inicial=fecha_fin,
+        plazo_meses=plazo,
         destacada=destacada
     )
 
-    obra.save()
-
-    print("\n Obra creada correctamente!")
-    print(f"ID asignado: {obra.id}")
+    print("\n Obra creada correctamente:")
+    print(f"   Expediente: {obra.expediente}")
+    print(f"   Descripción: {obra.descripcion}")
 
     return obra
 
+    def obtener_indicadores(self):
+        pass
