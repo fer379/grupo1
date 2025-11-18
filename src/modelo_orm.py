@@ -31,6 +31,7 @@ class FuenteFinanciamiento(BaseModel):
 
 class Obra(BaseModel):
     # campos mínimos: adaptar según CSV
+    id = UUIDField (unique=True,primary_key=True,null=False)
     expediente = CharField(null=True)
     descripcion = TextField(null=True)
     area_responsable = ForeignKeyField(AreaResponsable, backref='obras', null=True)
