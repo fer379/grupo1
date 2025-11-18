@@ -6,27 +6,26 @@ from modelo_orm import db
 
 
 
-class GestionarObra(ABC):
+# class GestionarObra:
+#     def __init__(self):
+#         self.df = None
+
+#     @abstractmethod
+#     def extraer_datos(self):
+#         pass
+
+#     @abstractmethod
+#     def limpiar_datos(self):
+#         pass
+
+
+
+
+class GestionarObra:
     def __init__(self):
         self.df = None
 
-    @abstractmethod
-    def extraer_datos(self):
-        pass
-
-    @abstractmethod
-    def limpiar_datos(self):
-        pass
-
-
-
-
-class Gestion(GestionarObra):
-    def __init__(self):
-        super().__init__()
-
     def conectar_db(self):
-        """Conecta a la base SQLite en /data."""
         raiz = Path(__file__).resolve().parent.parent
         archivo_db = raiz / "data" / "obras_urbanas.db"
 
@@ -34,7 +33,6 @@ class Gestion(GestionarObra):
 
         if db.is_closed():
             db.connect()
-
         print(f" Base de datos conectada en: {archivo_db}")
         return db
 
@@ -217,6 +215,10 @@ class Gestion(GestionarObra):
 
         print(f" Obras insertadas: {cargadas}")
         print(f" Filas con error: {errores}")
+
+
+
+
 def nueva_obra(self):
 
     from modelo_orm import (
