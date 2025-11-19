@@ -1,24 +1,34 @@
-from gestionar_obras import Gestion
+from gestionar_obras import GestionarObra
+from utils import ultimasCincoObras
 
 def main():
-    g = Gestion()
 
-    print("\n=== 1) Conectando base de datos ===")
-    g.conectar_db()
+    print("\n Conectando base de datos ===")
+    GestionarObra.conectar_db()
 
-    print("\n=== 2) Extrayendo datos del CSV ===")
-    g.extraer_datos()
+    print("\n Extrayendo datos del CSV ===")
+    GestionarObra.extraer_datos()
 
-    print("\n=== 3) Limpiando datos ===")
-    g.limpiar_datos()
+    print("\n Limpiando datos ===")
+    df = GestionarObra.limpiar_datos()
 
-    print("\n=== 4) Creando tablas ORM ===")
-    g.mapear_orm()
+    print(df["monto_contrato"].unique)
 
-    print("\n=== 5) Cargando datos en la base ===")
-    g.cargar_datos()
 
-    print("\n🎉 PROCESO COMPLETO — Todo listo!\n")
+    print("\n Creando tablas ORM ===")
+    GestionarObra.mapear_orm()
+
+    print("\n Cargando datos en la base ===")
+    GestionarObra.cargar_datos()
+
+    # GestionarObra.obtenerDf()
+    # GestionarObra.extraer_datos()
+
+    # print("Ultimos 5 filas de la base de datos:\n")
+    
+    # cinco = ultimasCincoObras()
+    # for row in cinco:
+    #     print(row.expediente)
 
 if __name__ == "__main__":
     main()

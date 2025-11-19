@@ -1,5 +1,6 @@
 from peewee import *
 from datetime import date
+import uuid
 
 db = SqliteDatabase('obras_urbanas.db')
 
@@ -7,55 +8,88 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class AreaResponsable(BaseModel):
-    nombre = CharField(unique=True)
-
-class TipoObra(BaseModel):
-    nombre = CharField(unique=True)
-
-class Barrio(BaseModel):
-    nombre = CharField(unique=True)
-    comuna = IntegerField(null=True)
+class Entorno(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    tipo = CharField(null=False, unique=True)
 
 class Etapa(BaseModel):
-    nombre = CharField(unique=True)
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    tipo = CharField(null=False, unique=True)
 
-class Empresa(BaseModel):
-    nombre = CharField(unique=True)
+class TipoObra(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    tipo = CharField(unique=True, null=False)
+
+class AreaResponsable(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    nombre = CharField(unique=True, null=False)
+
+class Barrio(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    nombre = CharField(null=True)
+    comuna = CharField(null=True)
+    class Meta:
+        indexes = (
+            (('nombre', 'comuna'), True),
+        )
+
+class EmpresaLicitacion(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    razon_social = CharField(unique=True, null=False)
+
+class EmpresaContratista(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    cuit = CharField(unique=True, null=False)
 
 class TipoContratacion(BaseModel):
-    nombre = CharField(unique=True)
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    tipo = CharField(unique=True, null=False)
 
-class FuenteFinanciamiento(BaseModel):
-    nombre = CharField(unique=True)
 
 class Obra(BaseModel):
-    # campos mínimos: adaptar según CSV
-    id = UUIDField (unique=True,primary_key=True,null=False)
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    nombre = CharField(null=False)
     expediente = CharField(null=True)
     descripcion = TextField(null=True)
-    area_responsable = ForeignKeyField(AreaResponsable, backref='obras', null=True)
-    tipo_obra = ForeignKeyField(TipoObra, backref='obras', null=True)
-    barrio = ForeignKeyField(Barrio, backref='obras', null=True)
-    etapa = ForeignKeyField(Etapa, backref='obras', null=True)
-    empresa = ForeignKeyField(Empresa, backref='obras', null=True)
-    tipo_contratacion = ForeignKeyField(TipoContratacion, backref='obras', null=True)
-    fuente_financiamiento = ForeignKeyField(FuenteFinanciamiento, backref='obras', null=True)
+    monto = FloatField(null=False)
+    direccion = CharField(null=True)
+    latitud = IntegerField(null=True)
+    longitud = IntegerField(null=True)
+    fecha_inicio = DateTimeField(null=True)
+    fecha_fin_inicial = DateTimeField(null=True)
+    plazo_meses = FloatField(null=True)
+    porcentaje_avance = IntegerField(null=False, default=0)
+    imagen_1 = CharField(null=True)
+    imagen_2 = CharField(null=True)
+    imagen_3 = CharField(null=True)
+    imagen_4 = CharField(null=True)
+    licitacion_anio = IntegerField(null=True)
+    nro_contratacion = CharField(null=True)
+    beneficiarios = CharField(null=True)
+    mano_obra = FloatField(null=True)
+    compromiso = BooleanField(null=False)
+    destacada = BooleanField(null=False)
+    ba_elige = BooleanField(null=False)
+    link_interno = CharField(null=True)
+    pliego_descarga = CharField(null=True)
+    expediente_numero = CharField(null=True)
+    estudio_ambiental_descarga = CharField(null=True)
+    financiamiento = CharField(null=True)
 
-    monto = FloatField(null=True)
-    fecha_inicio = DateField(null=True)
-    fecha_fin_inicial = DateField(null=True)
-    porcentaje_avance = IntegerField(default=0)
-    plazo_meses = IntegerField(null=True)
-    mano_obra = IntegerField(null=True)
-    destacada = BooleanField(default=False)
+    entorno = ForeignKeyField(Entorno, backref='obras', null=False)
+    etapa = ForeignKeyField(Etapa, backref='obras', null=True)
+    tipo = ForeignKeyField(TipoObra, backref='obras', null=False)
+    area_responsable = ForeignKeyField(AreaResponsable, backref='obras', null=False)
+    barrio = ForeignKeyField(Barrio, backref='obras_barriales', null=False)
+    licitacion_oferta_empresa = ForeignKeyField(EmpresaLicitacion, backref='obras', null=False)
+    tipo_contratacion = ForeignKeyField(TipoContratacion, backref='obras', null=False)
+    cuit_contratista = ForeignKeyField(EmpresaContratista, backref='obras', null=False)
+
+    class Meta:
+        table_name: 'obra'
 
     @classmethod
     def cargar_csv(cls, ruta_csv: str):
-        """
-        Carga todas las filas del CSV y las convierte en instancias Obra,
-        creando automáticamente las FK necesarias (área, empresa, barrio, etc.)
-        """
         import pandas as pd
 
         df = pd.read_csv(ruta_csv, encoding="latin1", sep=";", low_memory=False)
@@ -120,7 +154,6 @@ class Obra(BaseModel):
 
         return obras_creadas
 
-    # Métodos de instancia para etapas (se implementan en este archivo o en otro)
     def nuevo_proyecto(self):
         etapa, _ = Etapa.get_or_create(nombre="Proyecto")
         self.etapa = etapa
