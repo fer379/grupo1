@@ -25,7 +25,7 @@ class GestionarObra:
         raiz = Path(__file__).resolve().parent.parent
         archivo = raiz / "data" / "observatorio-de-obras-urbanas.csv"
 
-        self.df = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False)
+        self.df = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False, dtype=str, keep_default_na=False)
         return self.df
 
     @classmethod
@@ -101,13 +101,11 @@ class GestionarObra:
         for c in columnas_numericas:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", ".", regex=False).str.replace('$', '').replace('%', '').replace('N/A', '').str.strip()
-                print(df[c].values)
                 df[c] = pd.to_numeric(df[c], errors="coerce")
 
         for c in ["lat", "lng"]:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", "", regex=False).str.replace('$', '').str.strip()
-                print(df[c].values)
                 df[c] = pd.to_numeric(df[c], errors="coerce")
 
 
@@ -116,15 +114,10 @@ class GestionarObra:
         for c in columnas_booleanas:
             if c in df.columns:
                 df[c] = (df[c]
-                    .fillna("")        
-                    .astype(str)       
-                    .map({
-                        "SI": True,
-                        "": False,
-                        "NO": False,
-                        None: False
-                    })
-                    .fillna(False)
+                    .astype(str)
+                    .str.strip()
+                    .str.upper()
+                    .eq("SI")
                 )
                 
 
@@ -168,14 +161,7 @@ class GestionarObra:
     @classmethod
     def obtenerDf(self):
         df = self.df
-        # for i, fila in df.iterrows():
-        #     print(fila.get("nombre"))
-        #     print(fila.get("monto"))
-        #     print(fila.get("compromiso"))
-        #     print(fila["compromiso"].apply(type))
-        #     print("\n")
-        print(df['compromiso'].head(10))
-        print(df['compromiso'].apply(type).head(10))
+        print(df)
 
     @classmethod
     def cargar_datos(self):
