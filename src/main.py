@@ -9,16 +9,15 @@ def main():
     # print("\n Extrayendo datos del CSV ===")
     df = GestionarObra.extraer_datos()
 
-    # print(df['lat'].dtype)
-    # print(df.loc[444,"lat"])
-    # print(type(df.loc[444,"lat"]))
+    print(df.loc[1643,"fecha_fin_inicial"])
+    print(type(df.loc[1643,"fecha_fin_inicial"]))
 
 
     print("\n Limpiando datos ===")
     df = GestionarObra.limpiar_datos()
 
-    # print(df.loc[445,"lat"])
-    # print(df['lat'].dtype)
+    print(df.loc[1643,"fecha_fin_inicial"])
+    print(type(df.loc[1643,"fecha_fin_inicial"]))
 
 
     # print("\n Creando tablas ORM ===")

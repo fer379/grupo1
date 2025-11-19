@@ -25,12 +25,8 @@ class GestionarObra:
         raiz = Path(__file__).resolve().parent.parent
         archivo = raiz / "data" / "observatorio-de-obras-urbanas.csv"
 
-        df_crudo = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False, dtype=str, keep_default_na=False)
-        print(df_crudo.loc[0,"nombre"])
-        df_invertido = df_crudo.iloc[::-1].reset_index(drop=True)
-        print(df_invertido.loc[0,"nombre"])
-        self.df = df_invertido
-        # NOTE damos vuelta el df para que 
+        df = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False, dtype=str, keep_default_na=False)
+        self.df = df
 
         return self.df
 
@@ -186,7 +182,8 @@ class GestionarObra:
         if self.df is None:
             raise RuntimeError("Primero ejecutá extraer_datos() y limpiar_datos()")
 
-        df = self.df
+        df = self.df.iloc[::-1].reset_index(drop=True)
+        # NOTE damos vuelta el df para que a la hora de cargarse los datos, en las obras repetidas, se guarde solo la ultima creada y no la primera (que seguramente este desactualizada)
         print(" Iniciando carga de obras...")
 
         cargadas = 0
