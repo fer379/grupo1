@@ -25,7 +25,13 @@ class GestionarObra:
         raiz = Path(__file__).resolve().parent.parent
         archivo = raiz / "data" / "observatorio-de-obras-urbanas.csv"
 
-        self.df = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False, dtype=str, keep_default_na=False)
+        df_crudo = pd.read_csv(archivo, encoding="latin1", sep=";", low_memory=False, dtype=str, keep_default_na=False)
+        print(df_crudo.loc[0,"nombre"])
+        df_invertido = df_crudo.iloc[::-1].reset_index(drop=True)
+        print(df_invertido.loc[0,"nombre"])
+        self.df = df_invertido
+        # NOTE damos vuelta el df para que 
+
         return self.df
 
     @classmethod
@@ -105,9 +111,12 @@ class GestionarObra:
 
         for c in ["lat", "lng"]:
             if c in df.columns:
-                df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", "", regex=False).str.replace('$', '').str.strip()
-                df[c] = pd.to_numeric(df[c], errors="coerce")
-
+                df[c] = (df[c].astype(str)
+                .str.replace('.', '')
+                .str.replace(",", "", regex=False)
+                .str.strip()
+                .replace(["N/A", ""], None)
+                )
 
         columnas_booleanas = ["compromiso", "destacada", "ba_elige"]
 
@@ -159,11 +168,6 @@ class GestionarObra:
         print(" Tablas creadas correctamente en la base de datos.")
 
     @classmethod
-    def obtenerDf(self):
-        df = self.df
-        print(df)
-
-    @classmethod
     def cargar_datos(self):
         from modelo_orm import (
             Entorno,
@@ -193,15 +197,15 @@ class GestionarObra:
                 clean = lambda v: None if pd.isna(v) or v == "" else v
                 fila = fila.map(clean)
 
-                expediente = fila.get("expediente-numero") or None
+                nombre = fila.get("nombre") or None
 
-                if expediente:
+                if nombre:
                     existente = (
-                        Obra.select().where(Obra.expediente == expediente).first()
+                        Obra.select().where(Obra.nombre == nombre).first()
                     )
                     if existente:
                         print(
-                            f" Fila {i}: Ya existe obra con expediente {expediente} → se omite."
+                            f" Fila {i}: Ya existe obra con nombre {nombre} → se omite."
                         )
                         continue
                 entorno, _ = Entorno.get_or_create(
@@ -231,8 +235,8 @@ class GestionarObra:
                 )
 
                 Obra.create(
-                    nombre=fila.get("nombre"),
-                    expediente=expediente,
+                    nombre=nombre,
+                    expediente=fila.get("expediente-numero"),
                     descripcion=fila.get("descripcion"),
                     monto=fila.get("monto_contrato") or 0,
                     direccion=fila.get("direccion"),
