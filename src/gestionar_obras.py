@@ -601,3 +601,7 @@ class GestionarObra:
 
         db.commit()
         return obra
+
+
+    def obtener_indicadores(self):
+        return 'hola'

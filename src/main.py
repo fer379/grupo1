@@ -43,7 +43,7 @@ def main():
     # GestionarObra.extraer_datos()
 
     # print(GestionarObra.nueva_obra())
-    print(obtenerRegistro(Obra, id = 1664))
+    # print(obtenerRegistro(Obra, id = 1664))
 
 
 if __name__ == "__main__":
