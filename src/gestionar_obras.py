@@ -1,8 +1,10 @@
 from pathlib import Path
+from peewee import *
 from ftfy import fix_text
 from datetime import datetime
 import pandas as pd
 from modelo_orm import db
+import unicodedata
 
 
 class GestionarObra:
@@ -66,12 +68,19 @@ class GestionarObra:
             "cuit_contratista"
         ]
 
+        def quitar_tildes(texto):
+            if isinstance(texto, str):
+                nfkd = unicodedata.normalize("NFKD", texto)
+                return "".join([c for c in nfkd if not unicodedata.combining(c)])
+            return texto
+
         for c in columnas_texto:
             if c in df.columns:
                 df[c] = (
                     df[c]
                     .astype(str)
                     .map(fix_text)
+                    .map(quitar_tildes)
                     .str.normalize("NFC")
                     .str.strip()
                     .replace(
@@ -86,8 +95,8 @@ class GestionarObra:
                             "NO APLICA": None,
                             "-": None,
                             "": None,
-                            '.': None,
-                            'Sin efecto': None
+                            ".": None,
+                            "Sin efecto": None
                         }
                     )
                 )
@@ -548,12 +557,26 @@ class GestionarObra:
 
         print("\n===== INDICADORES GENERALES DE OBRAS =====\n")
 
-        # 1) Cantidad total
-        total = Obra.select().count()
-        print(f"Total de obras cargadas: {total}")
+        print("\n=== LISTADO DE AREAS RESPONSABLES ===")
 
-        # 2) Obras por etapa
-        print("\nObras por etapa:")
+        tipos = AreaResponsable.select().order_by(AreaResponsable.id.asc())
+
+        for t in tipos:
+            print(f"- ({t.id}) {t.nombre}")
+
+        print('\n ------------------------------------------------- \n')
+
+
+        print("=== LISTADO DE TIPOS DE OBRA ===")
+
+        tipos = TipoObra.select().order_by(TipoObra.id.asc())
+
+        for t in tipos:
+            print(f"- ({t.id}) {t.tipo}")
+
+        print('\n ------------------------------------------------- \n')
+
+        print("Obras por etapa:")
         q_etapas = (
             Obra
             .select(Etapa.tipo, fn.COUNT(Obra.id).alias("cant"))
@@ -563,39 +586,25 @@ class GestionarObra:
         for e in q_etapas:
             print(f"- {e.etapa.tipo}: {e.cant}")
 
-        # 3) Monto total invertido
-        monto_total = Obra.select(fn.SUM(Obra.monto)).scalar() or 0
-        print(f"\nMonto total invertido: ${monto_total:,.2f}")
+        print('\n ------------------------------------------------- \n')
 
-        # 4) Monto promedio
-        promedio = Obra.select(fn.AVG(Obra.monto)).scalar() or 0
-        print(f"Monto promedio por obra: ${promedio:,.2f}")
+        total = Obra.select().count()
+        print(f"Total de obras cargadas: {total} ")
 
-        # 5) Top áreas responsables
-        print("\nÁreas responsables con más obras:")
-        q_area = (
-            Obra
-            .select(AreaResponsable.nombre, fn.COUNT(Obra.id).alias("cant"))
-            .join(AreaResponsable)
-            .group_by(AreaResponsable.nombre)
-            .order_by(fn.COUNT(Obra.id).desc())
-            .limit(5)
+
+        consulta = (
+            TipoObra
+            .select(
+                TipoObra.tipo,
+                fn.SUM(Obra.monto).alias('monto_total')
+            )
+            .join(Obra)
+            .where(Obra.monto.is_null(False))
+            .group_by(TipoObra.id)
         )
-        for a in q_area:
-            print(f"- {a.area_responsable.nombre}: {a.cant}")
 
-        # 6) Barrios con más obras
-        print("\nTop 10 barrios con más obras:")
-        q_barrios = (
-            Obra
-            .select(Barrio.nombre, fn.COUNT(Obra.id).alias("cant"))
-            .join(Barrio)
-            .group_by(Barrio.nombre)
-            .order_by(fn.COUNT(Obra.id).desc())
-            .limit(10)
-        )
-        for b in q_barrios:
-            print(f"- {b.barrio.nombre}: {b.cant}")
+        for fila in consulta:
+            print(f"Tipo de Obra: {fila.tipo} - Monto total: ${fila.monto_total:,.2f}")
 
         comunas_filtrar = ["1", "2", "3"]
 
@@ -603,9 +612,36 @@ class GestionarObra:
          .select()
          .where(Barrio.comuna.in_(comunas_filtrar))
          .order_by(Barrio.comuna, Barrio.nombre))
+        
+        print('\n ------------------------------------------------- \n')
 
-        print("\n--- Barrios de comunas 1, 2 y 3 ---\n")
+
+        print("--- Barrios de comunas 1, 2 y 3 ---")
         for barrio in query:
             print(f"Barrio: {barrio.nombre}  |  Comuna: {barrio.comuna}")
+
+        query = (
+            Obra
+            .select()
+            .join(Etapa)
+            .where(
+                (Etapa.tipo == "Finalizada") &
+                (Obra.fecha_inicio.is_null(False)) &
+                (Obra.fecha_fin_inicial.is_null(False)) &
+                (
+                    fn.Julianday(Obra.fecha_fin_inicial) - fn.Julianday(Obra.fecha_inicio)
+                    <= 24 * 30.44   # 24 meses en días (aprox.)
+                )
+            )
+        )
+        print('\n ------------------------------------------------- \n')
+        
+        print(f"Cantidad de obras finalizadas en ≤ 24 meses: {query.count()}")
+
+        print('\n ------------------------------------------------- \n')
+
+        monto_total = Obra.select(fn.SUM(Obra.monto)).scalar() or 0
+        print(f"Monto total invertido: ${monto_total:,.2f}")
+        
 
         print("\n===== FIN DE INDICADORES =====\n")
