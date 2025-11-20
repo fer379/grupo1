@@ -60,7 +60,6 @@ class GestionarObra:
             "ba_elige",
             "link_interno",
             "pliego_descarga",
-            "expediente-numero",
             "estudio_ambiental_descarga",
             "financiamiento",
             "mano_obra",
@@ -131,7 +130,7 @@ class GestionarObra:
             
             df["porcentaje_avance"] = pd.to_numeric(df["porcentaje_avance"], errors="coerce")
             df['porcentaje_avance'] = df['porcentaje_avance'].astype(object)
-            df.loc[pd.isna(df['porcentaje_avance']), 'porcentaje_avance'] = None
+            df.loc[pd.isna(df['porcentaje_avance']), 'porcentaje_avance'] = 0
 
 
 
@@ -344,7 +343,6 @@ class GestionarObra:
                     ba_elige=fila.get("ba_elige"),
                     link_interno=fila.get("link_interno"),
                     pliego_descarga=fila.get("pliego_descarga"),
-                    expediente_numero=fila.get("expediente_numero"),
                     estudio_ambiental_descarga=fila.get("estudio_ambiental_descarga"),
                     financiamiento=financiamiento,
                     entorno=entorno,
@@ -431,16 +429,12 @@ class GestionarObra:
         def _input_datetime_opcional(mensaje):
             while True:
                 valor = input(mensaje).strip()
-                if not valor:
-                    return None
-
                 formatos = ("%Y-%m-%d", "%Y-%m-%d %H:%M")
                 for fmt in formatos:
                     try:
                         return datetime.strptime(valor, fmt)
                     except ValueError:
                         pass
-
                 print("Formato inválido. Use 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM' o deje vacío.")
 
         def _pedir_fk(modelo, campo, nombre_modelo, texto_campo, obligatorio=True):
@@ -506,7 +500,7 @@ class GestionarObra:
 
         
         nombre = _input_obligatorio("Nombre de la obra: ")
-        expediente = _input_opcional("Expediente: ")
+        # expediente = _input_opcional("Expediente: ")
         descripcion = _input_opcional("Descripción: ")
         monto = _input_float_opcional("Monto del contrato (vacío si no aplica): ")
         direccion = _input_opcional("Dirección: ")
@@ -514,11 +508,11 @@ class GestionarObra:
         latitud = _input_opcional("Latitud (texto, vacío si no aplica): ")
         longitud = _input_opcional("Longitud (texto, vacío si no aplica): ")
 
-        fecha_inicio = _input_datetime_opcional("Fecha de inicio (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
-        fecha_fin_inicial = _input_datetime_opcional("Fecha fin inicial (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
+        # fecha_inicio = _input_datetime_opcional("Fecha de inicio (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
+        # fecha_fin_inicial = _input_datetime_opcional("Fecha fin inicial (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
 
         plazo_meses = _input_float_opcional("Plazo en meses (vacío si no aplica): ")
-        porcentaje_avance = _input_int_opcional("Porcentaje de avance (0-100, vacío si no aplica): ")
+        porcentaje_avance = 0
 
         imagen_1 = _input_opcional("URL imagen 1 (vacío si no aplica): ")
         imagen_2 = _input_opcional("URL imagen 2 (vacío si no aplica): ")
@@ -526,42 +520,38 @@ class GestionarObra:
         imagen_4 = _input_opcional("URL imagen 4 (vacío si no aplica): ")
 
         licitacion_anio = _input_int_opcional("Año de licitación (entero, vacío si no aplica): ")
-        nro_contratacion = _input_opcional("Número de contratación (vacío si no aplica): ")
+        # nro_contratacion = _input_opcional("Número de contratación (vacío si no aplica): ")
 
         beneficiarios = _input_opcional("Beneficiarios (texto, vacío si no aplica): ")
 
         compromiso = _input_bool_obligatorio("¿Tiene compromiso?")
-        destacada = _input_bool_obligatorio("¿Es destacada?")
+        # destacada = _input_bool_obligatorio("¿Es destacada?")
         ba_elige = _input_bool_obligatorio("¿Es BA Elige?")
 
         link_interno = _input_opcional("Link interno (vacío si no aplica): ")
         pliego_descarga = _input_opcional("URL pliego descarga (vacío si no aplica): ")
-        expediente_numero = _input_opcional("Número de expediente (vacío si no aplica): ")
         estudio_ambiental_descarga = _input_opcional("URL estudio ambiental (vacío si no aplica): ")
 
         entorno = _pedir_fk(Entorno, Entorno.tipo, "Entorno", "tipo", obligatorio=True)
-        etapa = _pedir_fk(Etapa, Etapa.tipo, "Etapa", "tipo", obligatorio=False)
-        tipo = _pedir_fk(TipoObra, TipoObra.tipo, "Tipo de Obra", "tipo", obligatorio=True)
-        area_responsable = _pedir_fk(AreaResponsable, AreaResponsable.nombre, "Área Responsable", "nombre")
-        barrio = _pedir_barrio(obligatorio=True)
-        licitacion_oferta_empresa = _pedir_fk(EmpresaLicitacion, EmpresaLicitacion.razon_social,
-                                                "Empresa Licitación", "razón social")
-        tipo_contratacion = _pedir_fk(TipoContratacion, TipoContratacion.tipo,
-                                        "Tipo de Contratación", "tipo")
-        mano_obra, _ = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
-        financiamiento = _pedir_fk(Financiera, Financiera.nombre, "Financiamiento", "nombre", obligatorio=False)
+        # etapa = _pedir_fk(Etapa, Etapa.tipo, "Etapa", "tipo", obligatorio=False)
+        # tipo = _pedir_fk(TipoObra, TipoObra.tipo, "Tipo de Obra", "tipo", obligatorio=True)
+        # area_responsable = _pedir_fk(AreaResponsable, AreaResponsable.nombre, "Área Responsable", "nombre")
+        # barrio = _pedir_barrio(obligatorio=True)
+        # licitacion_oferta_empresa = _pedir_fk(EmpresaLicitacion, EmpresaLicitacion.razon_social,
+        #                                         "Empresa Licitación", "razón social")
+        # tipo_contratacion = _pedir_fk(TipoContratacion, TipoContratacion.tipo,
+        #                                 "Tipo de Contratación", "tipo")
+        # mano_obra, _ = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
+        # financiamiento = _pedir_fk(Financiera, Financiera.nombre, "Financiamiento", "nombre", obligatorio=False)
 
 
         obra = Obra(
             nombre=nombre,
-            expediente=expediente,
             descripcion=descripcion,
             monto=monto,
             direccion=direccion,
             latitud=latitud,
             longitud=longitud,
-            fecha_inicio=fecha_inicio,
-            fecha_fin_inicial=fecha_fin_inicial,
             plazo_meses=plazo_meses,
             porcentaje_avance=porcentaje_avance,
             imagen_1=imagen_1,
@@ -569,24 +559,34 @@ class GestionarObra:
             imagen_3=imagen_3,
             imagen_4=imagen_4,
             licitacion_anio=licitacion_anio,
-            nro_contratacion=nro_contratacion,
             beneficiarios=beneficiarios,
             compromiso=compromiso,
-            destacada=destacada,
             ba_elige=ba_elige,
             link_interno=link_interno,
             pliego_descarga=pliego_descarga,
-            expediente_numero=expediente_numero,
             estudio_ambiental_descarga=estudio_ambiental_descarga,
             entorno=entorno,
-            etapa=etapa,
-            tipo=tipo,
-            area_responsable=area_responsable,
-            barrio=barrio,
-            licitacion_oferta_empresa=licitacion_oferta_empresa,
-            tipo_contratacion=tipo_contratacion,
-            mano_obra=mano_obra,
-            financiamiento=financiamiento,
+            destacada= False,
+            # 1. nuevo_proyecto():
+            etapa=None,
+            tipo=None,
+            area_responsable=None,
+            barrio=None,
+
+            # 2. iniciar_contratacion():
+            nro_contratacion=None,
+            tipo_contratacion=None,
+
+            # 3. adjudicar_obra():
+            licitacion_oferta_empresa=None,
+            expediente=None,
+
+
+            # 4. iniciar_obra():
+            fecha_inicio=None,
+            fecha_fin_inicial=None,
+            financiamiento=None,
+            mano_obra=None,
         )
 
         obra.save()
