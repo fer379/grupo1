@@ -37,7 +37,7 @@ python main.py
 - [X] `conectar_db()` → conectar con la base SQLite `obras_urbanas.db`.
 - [X] `mapear_orm()` → crear tablas con `create_tables(list)`.
 - [X] `limpiar_datos()` → limpieza de nulos y datos incorrectos del DataFrame.
-- [ ] `cargar_datos()` → persistir registros limpios en la BD usando `Model.create()`.
+- [X] `cargar_datos()` → persistir registros limpios en la BD usando `Model.create()`.
 - [ ] `nueva_obra()` → crear nuevas instancias de Obra con datos ingresados por teclado.
     - [ ] Validar claves foráneas mediante búsqueda ORM.
     - [ ] Informar y pedir reingreso si el valor no existe.

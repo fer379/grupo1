@@ -1,9 +1,7 @@
 from pathlib import Path
-import locale
+from ftfy import fix_text
 from datetime import datetime
 import pandas as pd
-import numpy as np
-from abc import ABC, abstractmethod
 from modelo_orm import db
 
 
@@ -65,6 +63,7 @@ class GestionarObra:
             "expediente-numero",
             "estudio_ambiental_descarga",
             "financiamiento",
+            "cuit_contratista"
         ]
 
         for c in columnas_texto:
@@ -72,6 +71,8 @@ class GestionarObra:
                 df[c] = (
                     df[c]
                     .astype(str)
+                    .map(fix_text)
+                    .str.normalize("NFC")
                     .str.strip()
                     .replace(
                         {
@@ -112,7 +113,6 @@ class GestionarObra:
         columnas_numericas = [
             "plazo_meses",
             "licitacion_anio",
-            "cuit_contratista",
             "mano_obra",
         ]
 
@@ -225,7 +225,10 @@ class GestionarObra:
             EmpresaLicitacion,
             EmpresaContratista,
             TipoContratacion,
+            ManoObra,
+            Financiera,
             Obra,
+            EmpresaContratista
         )
 
         db.create_tables(
@@ -238,7 +241,10 @@ class GestionarObra:
                 EmpresaLicitacion,
                 EmpresaContratista,
                 TipoContratacion,
+                ManoObra,
+                Financiera,
                 Obra,
+                EmpresaContratista
             ]
         )
         db.commit()
@@ -256,7 +262,10 @@ class GestionarObra:
             EmpresaLicitacion,
             EmpresaContratista,
             TipoContratacion,
+            ManoObra,
+            Financiera,
             Obra,
+            EmpresaContratista
         )
 
         self.conectar_db()
@@ -264,8 +273,8 @@ class GestionarObra:
         if self.df is None:
             raise RuntimeError("Primero ejecutá extraer_datos() y limpiar_datos()")
 
-        df = self.df.iloc[::-1].reset_index(drop=True)
-        # NOTE damos vuelta el df para que a la hora de cargarse los datos, en las obras repetidas, se guarde solo la ultima creada y no la primera (que seguramente este desactualizada)
+        # df = self.df.iloc[::-1].reset_index(drop=True)
+        # # NOTE damos vuelta el df para que a la hora de cargarse los datos, en las obras repetidas, se guarde solo la ultima creada y no la primera (que seguramente este desactualizada)
         print(" Iniciando carga de obras...")
 
         cargadas = 0
@@ -273,58 +282,55 @@ class GestionarObra:
 
         for i, fila in df.iterrows():
             try:
-                clean = lambda v: None if pd.isna(v) or v == "" else v
+                # NOTE normalizacion extra por las dudas
+                def clean(v):
+                    if pd.isna(v) or v == "":
+                        return None
+                    return v
                 fila = fila.map(clean)
-
-                nombre = fila.get("nombre") or None
-
-                if nombre:
-                    existente = (
-                        Obra.select().where(Obra.nombre == nombre).first()
-                    )
-                    if existente:
-                        print(
-                            f" Fila {i}: Ya existe obra con nombre {nombre} → se omite."
-                        )
-                        continue
                 entorno, _ = Entorno.get_or_create(
-                    tipo=fila.get("entorno") or "NO INFORMADO"
+                    tipo=fila.get("entorno") or None
                 )
-                etapa, _ = Etapa.get_or_create(tipo=fila.get("etapa") or "NO INFORMADO")
+                etapa, _ = Etapa.get_or_create(tipo=fila.get("etapa") or None)
                 tipo, _ = TipoObra.get_or_create(
-                    tipo=fila.get("tipo") or "NO INFORMADO"
+                    tipo=fila.get("tipo") or None
                 )
                 area_responsable, _ = AreaResponsable.get_or_create(
-                    nombre=fila.get("area_responsable") or "NO INFORMADO"
+                    nombre=fila.get("area_responsable") or None
                 )
                 barrio, _ = Barrio.get_or_create(
-                    nombre=fila.get("barrio") or "NO INFORMADO",
-                    comuna=fila.get("comuna") or "NO INFORMADO",
+                    nombre=fila.get("barrio") or None,
+                    comuna=fila.get("comuna") or None,
                 )
 
                 licitacion_oferta_empresa, _ = EmpresaLicitacion.get_or_create(
-                    razon_social=fila.get("licitacion_oferta_empresa") or "NO INFORMADO"
-                )
-                cuit_contratista, _ = EmpresaContratista.get_or_create(
-                    cuit=fila.get("cuit_contratista") or "NO INFORMADO"
+                    razon_social=fila.get("licitacion_oferta_empresa") or None
                 )
 
                 tipo_contratacion, _ = TipoContratacion.get_or_create(
-                    tipo=fila.get("tipo_contratacion") or "NO INFORMADO"
+                    tipo=fila.get("tipo") or None
                 )
 
-                Obra.create(
-                    nombre=nombre,
+                mano_obra, _ = ManoObra.get_or_create(
+                    dato=fila.get("mano_obra") or None
+                )
+
+                financiamiento, _ = Financiera.get_or_create(
+                    nombre=fila.get("financiamiento") or None
+                )
+
+                obra, _ = Obra.get_or_create(
+                    nombre=fila.get("nombre"),
                     expediente=fila.get("expediente-numero"),
                     descripcion=fila.get("descripcion"),
-                    monto=fila.get("monto_contrato") or 0,
+                    monto=fila.get("monto_contrato") or None,
                     direccion=fila.get("direccion"),
                     latitud=fila.get("lat"),
                     longitud=fila.get("lng"),
                     fecha_inicio=fila.get("fecha_inicio"),
                     fecha_fin_inicial=fila.get("fecha_fin_inicial"),
                     plazo_meses=fila.get("plazo_meses"),
-                    porcentaje_avance=fila.get("porcentaje_avance") or 0,
+                    porcentaje_avance=fila.get("porcentaje_avance") or None,
                     imagen_1=fila.get("imagen_1") or None,
                     imagen_2=fila.get("imagen_2") or None,
                     imagen_3=fila.get("imagen_3") or None,
@@ -332,7 +338,7 @@ class GestionarObra:
                     licitacion_anio=fila.get("licitacion_anio"),
                     nro_contratacion=fila.get("nro_contratacion"),
                     beneficiarios=fila.get("beneficiarios"),
-                    mano_obra=fila.get("mano_obra"),
+                    mano_obra=mano_obra,
                     compromiso=fila.get("compromiso"),
                     destacada=fila.get("destacada"),
                     ba_elige=fila.get("ba_elige"),
@@ -340,7 +346,7 @@ class GestionarObra:
                     pliego_descarga=fila.get("pliego_descarga"),
                     expediente_numero=fila.get("expediente_numero"),
                     estudio_ambiental_descarga=fila.get("estudio_ambiental_descarga"),
-                    financiamiento=fila.get("financiamiento"),
+                    financiamiento=financiamiento,
                     entorno=entorno,
                     etapa=etapa,
                     tipo=tipo,
@@ -348,9 +354,11 @@ class GestionarObra:
                     barrio=barrio,
                     licitacion_oferta_empresa=licitacion_oferta_empresa,
                     tipo_contratacion=tipo_contratacion,
-                    cuit_contratista=cuit_contratista,
                 )
-
+                cuit_contratista, _ = EmpresaContratista.get_or_create(
+                    cuit=fila.get("cuit_contratista") or None,
+                    obra = obra
+                    )
                 cargadas += 1
 
             except Exception as e:

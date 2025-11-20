@@ -1,5 +1,19 @@
 from gestionar_obras import GestionarObra
-from utils import ultimasCincoObras, obtenerAcumColumna
+from utils import ultimasCincoObras, obtenerAcumColumna, obtenerRegistro, obtenerValoresTabla
+from modelo_orm import (
+            Entorno,
+            Etapa,
+            TipoObra,
+            AreaResponsable,
+            Barrio,
+            EmpresaLicitacion,
+            EmpresaContratista,
+            TipoContratacion,
+            ManoObra,
+            Financiera,
+            Obra,
+            EmpresaContratista
+        )
 
 def main():
 
@@ -7,19 +21,10 @@ def main():
     GestionarObra.conectar_db()
 
     # print("\n Extrayendo datos del CSV ===")
-    df = GestionarObra.extraer_datos()
-
-    # print(df.loc[1211,"comuna"])
-    # print(type(df.loc[1211,"comuna"]))
-
-
-    print("\n Limpiando datos ===")
-    df = GestionarObra.limpiar_datos()
-
-    # print(df['imagen_1'].value_counts(dropna=False)) 
-    print(df.loc[1088,"imagen_1"])
-    # print(type(df.loc[1211,"comuna"]))
-
+    # df = GestionarObra.extraer_datos()
+    
+    # print("\n Limpiando datos ===")
+    # df = GestionarObra.limpiar_datos()
 
     # print("\n Creando tablas ORM ===")
     # GestionarObra.mapear_orm()
@@ -27,13 +32,15 @@ def main():
     # print("\n Cargando datos en la base ===")
     # GestionarObra.cargar_datos()
 
+
+    print("\n Obteniendo un registro ===")
+    print(obtenerRegistro(Obra, compromiso=True))
+
+    # print("\n Obteniendo datos de tabla ===")
+    # print(obtenerValoresTabla(Obra, compromiso=True))
+
     # GestionarObra.obtenerDf()
     # GestionarObra.extraer_datos()
-
-    # res = obtenerAcumColumna('expediente')
-    # for exp in res:
-    #     if exp[1] != 1:
-    #         print(exp)
 
 if __name__ == "__main__":
     main()
