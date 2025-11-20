@@ -1,4 +1,6 @@
 from pathlib import Path
+import locale
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
@@ -84,12 +86,22 @@ class GestionarObra:
 
         df = df.where(pd.notnull(df), None)
 
-        columnas_fecha = ["fecha_inicio", "fecha_fin"]
+        columnas_fecha = ["fecha_inicio", "fecha_fin_inicial"]
 
         for c in columnas_fecha:
             if c in df.columns:
-                df[c] = pd.to_datetime(df[c], format="%d/%m/%Y", errors="coerce")
-                df[c] = df[c].dt.strftime("%Y-%m-%d")
+
+                meses_es = {
+                    "ene": "1", "feb": "2", "mar": "3", "abr": "4",
+                    "may": "5", "jun": "6", "jul": "7", "ago": "8",
+                    "sep": "9", "oct": "10", "nov": "11", "dic": "12"
+                }
+                col = df[c].astype(str).str.strip().str.lower()
+                for m_es, m_num in meses_es.items():
+                    col = col.str.replace(fr"^{m_es}-","1/" + m_num + "/" + "20", regex=True)
+
+                df[c] = pd.to_datetime(col, dayfirst=True, errors="coerce")
+                df[c] = (df[c].astype(str).replace('NaT', None))
 
         columnas_numericas = [
             "monto_contrato",
