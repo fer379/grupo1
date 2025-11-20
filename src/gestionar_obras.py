@@ -603,5 +603,64 @@ class GestionarObra:
         return obra
 
 
+    @classmethod
     def obtener_indicadores(self):
-        return 'hola'
+        from modelo_orm import (
+            Obra, Etapa, TipoObra, AreaResponsable, Barrio, Entorno, Financiera
+        )
+        from peewee import fn
+
+        self.conectar_db()
+
+        print("\n===== INDICADORES GENERALES DE OBRAS =====\n")
+
+        # 1) Cantidad total
+        total = Obra.select().count()
+        print(f"Total de obras cargadas: {total}")
+
+        # 2) Obras por etapa
+        print("\nObras por etapa:")
+        q_etapas = (
+            Obra
+            .select(Etapa.tipo, fn.COUNT(Obra.id).alias("cant"))
+            .join(Etapa)
+            .group_by(Etapa.tipo)
+        )
+        for e in q_etapas:
+            print(f"- {e.etapa.tipo}: {e.cant}")
+
+        # 3) Monto total invertido
+        monto_total = Obra.select(fn.SUM(Obra.monto)).scalar() or 0
+        print(f"\nMonto total invertido: ${monto_total:,.2f}")
+
+        # 4) Monto promedio
+        promedio = Obra.select(fn.AVG(Obra.monto)).scalar() or 0
+        print(f"Monto promedio por obra: ${promedio:,.2f}")
+
+        # 5) Top áreas responsables
+        print("\nÁreas responsables con más obras:")
+        q_area = (
+            Obra
+            .select(AreaResponsable.nombre, fn.COUNT(Obra.id).alias("cant"))
+            .join(AreaResponsable)
+            .group_by(AreaResponsable.nombre)
+            .order_by(fn.COUNT(Obra.id).desc())
+            .limit(5)
+        )
+        for a in q_area:
+            print(f"- {a.area_responsable.nombre}: {a.cant}")
+
+        # 6) Barrios con más obras
+        print("\nTop 10 barrios con más obras:")
+        q_barrios = (
+            Obra
+            .select(Barrio.nombre, fn.COUNT(Obra.id).alias("cant"))
+            .join(Barrio)
+            .group_by(Barrio.nombre)
+            .order_by(fn.COUNT(Obra.id).desc())
+            .limit(10)
+        )
+        for b in q_barrios:
+            print(f"- {b.barrio.nombre}: {b.cant}")
+
+        print("\n===== FIN DE INDICADORES =====\n")
