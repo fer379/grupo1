@@ -11,7 +11,7 @@ para correr la aplicacion ejecutar el codigo en el archivo main.py, o mediante e
 python main.py
 ```  
 
-# Puntos clave  
+## Puntos clave  
  Se anotaron puntos clave del codigo con comentarios que comienzan en ``` NOTE ```, para luego incluirlos en la presentacion.
 
 # To-Do List – Trabajo Práctico Final Integrador (DSOO)
