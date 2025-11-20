@@ -89,58 +89,72 @@ class Obra(BaseModel):
     financiamiento = ForeignKeyField(Financiera, backref='obras', null=True)
 
 
-    # def nuevo_proyecto(self):
-    #     etapa, _ = Etapa.get_or_create(nombre="Proyecto")
-    #     self.etapa = etapa
-    #     self.save()
+    def nuevo_proyecto(self):
+        etapa, _ = Etapa.get_or_create(tipo="Proyecto")
+        self.etapa = etapa
+        self.save()
 
-    # def iniciar_contratacion(self, tipo_contratacion, nro_contratacion):
-    #     tc = TipoContratacion.get(TipoContratacion.nombre == tipo_contratacion)
-    #     self.tipo_contratacion = tc
-    #     # guardamos nro_contratacion en expediente o campo similar
-    #     self.expediente = nro_contratacion
-    #     self.save()
+    def iniciar_contratacion(self, tipo_contratacion, nro_contratacion):
+        tc, _ = TipoContratacion.get_or_create(tipo=tipo_contratacion)
+        self.tipo_contratacion = tc
+        self.nro_contratacion = nro_contratacion
+        self.save()
 
-    # def adjudicar_obra(self, empresa_nombre, nro_expediente):
-    #     emp = Empresa.get(Empresa.nombre == empresa_nombre)
-    #     self.empresa = emp
-    #     self.expediente = nro_expediente
-    #     self.save()
+    def adjudicar_obra(self, razon_social):
+        empresa, _ = EmpresaLicitacion.get_or_create(razon_social=razon_social)
+        self.licitacion_oferta_empresa = empresa
+        self.save()
 
-    # def iniciar_obra(self, destacada, fecha_inicio, fecha_fin_inicial, fuente_fin, mano_obra):
-    #     self.destacada = destacada
-    #     self.fecha_inicio = fecha_inicio
-    #     self.fecha_fin_inicial = fecha_fin_inicial
-    #     self.fuente_financiamiento = FuenteFinanciamiento.get(FuenteFinanciamiento.nombre == fuente_fin)
-    #     self.mano_obra = mano_obra
-    #     etapa, _ = Etapa.get_or_create(nombre="Ejecución")
-    #     self.etapa = etapa
-    #     self.save()
+    def iniciar_obra(self, destacada, fecha_inicio, fecha_fin_inicial,
+                     nombre_financiera, mano_obra_dato):
 
-    # def actualizar_porcentaje_avance(self, porcentaje):
-    #     self.porcentaje_avance = porcentaje
-    #     self.save()
+        self.destacada = destacada
+        self.fecha_inicio = fecha_inicio
+        self.fecha_fin_inicial = fecha_fin_inicial
 
-    # def incrementar_plazo(self, meses):
-    #     if self.plazo_meses is None: self.plazo_meses = 0
-    #     self.plazo_meses += meses
-    #     self.save()
+        # Financiamiento
+        financiera, _ = Financiera.get_or_create(nombre=nombre_financiera)
+        self.financiamiento = financiera
 
-    # def incrementar_mano_obra(self, cantidad):
-    #     if self.mano_obra is None: self.mano_obra = 0
-    #     self.mano_obra += cantidad
-    #     self.save()
+        # Mano de obra
+        mano, _ = ManoObra.get_or_create(dato=mano_obra_dato)
+        self.mano_obra = mano
 
-    # def finalizar_obra(self):
-    #     etapa, _ = Etapa.get_or_create(nombre="Finalizada")
-    #     self.etapa = etapa
-    #     self.porcentaje_avance = 100
-    #     self.save()
+        etapa, _ = Etapa.get_or_create(tipo="Ejecución")
+        self.etapa = etapa
 
-    # def rescindir_obra(self):
-    #     etapa, _ = Etapa.get_or_create(nombre="Rescindida")
-    #     self.etapa = etapa
-    #     self.save()
+        self.save()
+
+    def actualizar_porcentaje_avance(self, porcentaje):
+        self.porcentaje_avance = porcentaje
+        self.save()
+
+    def incrementar_plazo(self, meses):
+        if self.plazo_meses is None:
+            self.plazo_meses = 0
+        self.plazo_meses += meses
+        self.save()
+
+    def incrementar_mano_obra(self, cantidad):
+        if self.mano_obra is None:
+            nuevo_dato = str(cantidad)
+        else:
+            nuevo_dato = f"{self.mano_obra.dato} + {cantidad}"
+
+        mano, _ = ManoObra.get_or_create(dato=nuevo_dato)
+        self.mano_obra = mano
+        self.save()
+
+    def finalizar_obra(self):
+        etapa, _ = Etapa.get_or_create(tipo="Finalizada")
+        self.etapa = etapa
+        self.porcentaje_avance = 100
+        self.save()
+
+    def rescindir_obra(self):
+        etapa, _ = Etapa.get_or_create(tipo="Rescindida")
+        self.etapa = etapa
+        self.save()
 
 class EmpresaContratista(BaseModel):
         id = AutoField()
