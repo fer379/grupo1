@@ -17,7 +17,7 @@ from modelo_orm import (
 
 def main():
 
-    print("\n Conectando base de datos ===")
+    # print("\n Conectando base de datos ===")
     GestionarObra.conectar_db()
 
     # print("\n Extrayendo datos del CSV ===")
@@ -42,8 +42,9 @@ def main():
     # GestionarObra.obtenerDf()
     # GestionarObra.extraer_datos()
 
-    # print(ManoObra.get(id = 32).dato)
-    print(GestionarObra.nueva_obra())
+    # print(GestionarObra.nueva_obra())
+    print(obtenerRegistro(Obra, id = 1664))
+
 
 if __name__ == "__main__":
     main()

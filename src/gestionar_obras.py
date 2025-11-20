@@ -87,7 +87,8 @@ class GestionarObra:
                             "NO APLICA": None,
                             "-": None,
                             "": None,
-                            '.': None
+                            '.': None,
+                            'Sin efecto': None
                         }
                     )
                 )
@@ -307,7 +308,7 @@ class GestionarObra:
                 )
 
                 tipo_contratacion, _ = TipoContratacion.get_or_create(
-                    tipo=fila.get("tipo") or None
+                    tipo=fila.get("contratacion_tipo") or None
                 )
 
                 mano_obra, _ = ManoObra.get_or_create(
@@ -547,10 +548,8 @@ class GestionarObra:
                                                 "Empresa Licitación", "razón social")
         tipo_contratacion = _pedir_fk(TipoContratacion, TipoContratacion.tipo,
                                         "Tipo de Contratación", "tipo")
-        mano_obra = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
+        mano_obra, _ = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
         financiamiento = _pedir_fk(Financiera, Financiera.nombre, "Financiamiento", "nombre", obligatorio=False)
-        
-
 
 
         obra = Obra(

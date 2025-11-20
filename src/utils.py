@@ -42,7 +42,6 @@ def obtenerRegistro(model, **filters):
         if obra is None:
             return None
 
-    # Armar el diccionario base con los campos propios de Obra
         data = {
             "id": str(obra.id),
             "nombre": obra.nombre,
@@ -72,7 +71,6 @@ def obtenerRegistro(model, **filters):
             "estudio_ambiental_descarga": obra.estudio_ambiental_descarga,
         }
 
-        # Expandir relaciones (ForeignKeys) a algo legible
         data["entorno"] = {
             "id": str(obra.entorno.id),
             "tipo": obra.entorno.tipo,
@@ -119,13 +117,12 @@ def obtenerRegistro(model, **filters):
             "nombre": obra.financiamiento.nombre,
         } if obra.financiamiento is not None else None
 
-        # (Opcional) incluir contratistas asociados
         data["empresas_contratistas"] = [
             {
                 "id": str(ec.id),
                 "cuit": ec.cuit,
             }
-            for ec in obra.obra  # backref definido en EmpresaContratista: backref="telefonos"
+            for ec in obra.obra  
         ]
 
         return data
