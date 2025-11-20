@@ -8,6 +8,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 
+
 class Entorno(BaseModel):
     id = UUIDField (primary_key=True,default=uuid.uuid4)
     tipo = CharField(null=False, unique=True)
@@ -37,16 +38,22 @@ class EmpresaLicitacion(BaseModel):
     id = UUIDField (primary_key=True,default=uuid.uuid4)
     razon_social = CharField(unique=True, null=False)
 
-class EmpresaContratista(BaseModel):
-    id = UUIDField (primary_key=True,default=uuid.uuid4)
-    cuit = CharField(unique=True, null=False)
-
 class TipoContratacion(BaseModel):
     id = UUIDField (primary_key=True,default=uuid.uuid4)
     tipo = CharField(unique=True, null=False)
 
+class ManoObra(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    dato = CharField(unique=True, null=False)
+
+class Financiera(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    nombre = CharField(unique=True, null=False)
 
 class Obra(BaseModel):
+    class Meta:
+        table_name: 'obra'
+    
     id = UUIDField (primary_key=True,default=uuid.uuid4)
     nombre = CharField(null=False)
     expediente = CharField(null=True)
@@ -74,7 +81,6 @@ class Obra(BaseModel):
     pliego_descarga = CharField(null=True)
     expediente_numero = CharField(null=True)
     estudio_ambiental_descarga = CharField(null=True)
-    financiamiento = CharField(null=True)
 
     entorno = ForeignKeyField(Entorno, backref='obras', null=False)
     etapa = ForeignKeyField(Etapa, backref='obras', null=True)
@@ -83,10 +89,15 @@ class Obra(BaseModel):
     barrio = ForeignKeyField(Barrio, backref='obras_barriales', null=False)
     licitacion_oferta_empresa = ForeignKeyField(EmpresaLicitacion, backref='obras', null=False)
     tipo_contratacion = ForeignKeyField(TipoContratacion, backref='obras', null=False)
-    cuit_contratista = ForeignKeyField(EmpresaContratista, backref='obras', null=False)
+    mano_obra = ForeignKeyField(ManoObra, backref='obras', null=True)
+    financiamiento = ForeignKeyField(Financiera, backref='obras', null=True)
 
-    class Meta:
-        table_name: 'obra'
+
+
+
+    @property
+    def telefonos_lista(self):
+        return [t.numero for t in self.telefonos]
 
     @classmethod
     def cargar_csv(cls, ruta_csv: str):
@@ -206,3 +217,8 @@ class Obra(BaseModel):
         etapa, _ = Etapa.get_or_create(nombre="Rescindida")
         self.etapa = etapa
         self.save()
+
+class EmpresaContratista(BaseModel):
+    id = UUIDField (primary_key=True,default=uuid.uuid4)
+    obra = ForeignKeyField(Obra, backref="telefonos", on_delete="CASCADE")
+    cuit = CharField(unique=True, null=False)

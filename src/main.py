@@ -16,8 +16,8 @@ def main():
     print("\n Limpiando datos ===")
     df = GestionarObra.limpiar_datos()
 
-    # print(df['monto_contrato'].value_counts(dropna=False)) 
-    # print(df.loc[1211,"comuna"])
+    # print(df['imagen_1'].value_counts(dropna=False)) 
+    print(df.loc[1088,"imagen_1"])
     # print(type(df.loc[1211,"comuna"]))
 
 

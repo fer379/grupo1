@@ -80,6 +80,11 @@ class GestionarObra:
                             "NaN": None,
                             "NO INFORMADO": None,
                             "SIN DATOS": None,
+                            "No aplica": None,
+                            "no aplica": None,
+                            "NO APLICA": None,
+                            "-": None,
+                            "": None
                         }
                     )
                 )
@@ -106,7 +111,6 @@ class GestionarObra:
 
         columnas_numericas = [
             "plazo_meses",
-            "porcentaje_avance",
             "licitacion_anio",
             "cuit_contratista",
             "mano_obra",
@@ -114,9 +118,21 @@ class GestionarObra:
 
         for c in columnas_numericas:
             if c in df.columns:
-                df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", ".", regex=False).str.replace('$', '').replace('%', '').replace('N/A', '').str.strip()
+                df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", ".", regex=False).str.replace('$', '').replace('N/A', '').str.strip()
                 df[c] = pd.to_numeric(df[c], errors="coerce")
-                print(df.loc[1, "procentaje_avance"])
+
+        if "porcentaje_avance" in df.columns:
+
+            # NOTE hay un valor 'mar-34.2%' asi quitamos ese valor usando solo la parte de la derecha del guion
+            df["porcentaje_avance"] = df["porcentaje_avance"].astype(str).str.split("-", n=1).str[-1]
+            df["porcentaje_avance"] = df["porcentaje_avance"].astype(str).str.strip().str.replace(",", ".", regex=False).str.replace('%', '', regex=False)
+            
+            df["porcentaje_avance"] = pd.to_numeric(df["porcentaje_avance"], errors="coerce")
+            df['porcentaje_avance'] = df['porcentaje_avance'].astype(object)
+            df.loc[pd.isna(df['porcentaje_avance']), 'porcentaje_avance'] = None
+
+
+
 
         if 'monto_contrato' in df.columns:
             df['monto_contrato'] = df['monto_contrato'].replace('.', None, regex=False).replace('', None, regex=False)
