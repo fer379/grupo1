@@ -6,6 +6,10 @@ o
 ```
 python -m pip install pandas numpy peewee python-dateutil
 ```  
+para correr la aplicacion ejecutar el codigo en el archivo main.py, o mediante el comando en consola sobre /src/:
+```
+python main.py
+```  
 
 # Puntos clave  
  Se anotaron puntos clave del codigo con comentarios que comienzan en ``` NOTE ```, para luego incluirlos en la presentacion.
@@ -13,26 +17,26 @@ python -m pip install pandas numpy peewee python-dateutil
 # To-Do List – Trabajo Práctico Final Integrador (DSOO)
 
 ## 1. Preparación del proyecto
-- [ ] Crear carpeta del proyecto con apellidos de los integrantes separados por guiones.
-- [ ] Descargar el archivo `observatorio-de-obras-urbanas.csv` desde los enlaces proporcionados.
-- [ ] Ubicar el CSV en la carpeta del proyecto.
-- [ ] Analizar la estructura de datos del CSV.
+- [X] Crear carpeta del proyecto con apellidos de los integrantes separados por guiones.
+- [X] Descargar el archivo `observatorio-de-obras-urbanas.csv` desde los enlaces proporcionados.
+- [X] Ubicar el CSV en la carpeta del proyecto.
+- [X] Analizar la estructura de datos del CSV.
 
 ## 2. Crear módulo `modelo_orm.py`
-- [ ] Crear archivo `modelo_orm.py`.
-- [ ] Definir clase `BaseModel` heredando de `peewee.Model`.
-- [ ] Definir todas las clases necesarias del modelo ORM (tablas y relaciones).
-- [ ] Configurar conexión a la base de datos SQLite `obras_urbanas.db`.
+- [X] Crear archivo `modelo_orm.py`.
+- [X] Definir clase `BaseModel` heredando de `peewee.Model`.
+- [X] Definir todas las clases necesarias del modelo ORM (tablas y relaciones).
+- [X] Configurar conexión a la base de datos SQLite `obras_urbanas.db`.
 
 ## 3. Crear módulo `gestionar_obras.py`
-- [ ] Crear archivo `gestionar_obras.py`.
-- [ ] Definir clase abstracta `GestionarObra` con métodos de clase.
+- [X] Crear archivo `gestionar_obras.py`.
+- [X] Definir clase abstracta `GestionarObra` con métodos de clase.
 
 ### Métodos obligatorios
-- [ ] `extraer_datos()` → cargar dataset con pandas en un DataFrame.
-- [ ] `conectar_db()` → conectar con la base SQLite `obras_urbanas.db`.
-- [ ] `mapear_orm()` → crear tablas con `create_tables(list)`.
-- [ ] `limpiar_datos()` → limpieza de nulos y datos incorrectos del DataFrame.
+- [X] `extraer_datos()` → cargar dataset con pandas en un DataFrame.
+- [X] `conectar_db()` → conectar con la base SQLite `obras_urbanas.db`.
+- [X] `mapear_orm()` → crear tablas con `create_tables(list)`.
+- [X] `limpiar_datos()` → limpieza de nulos y datos incorrectos del DataFrame.
 - [ ] `cargar_datos()` → persistir registros limpios en la BD usando `Model.create()`.
 - [ ] `nueva_obra()` → crear nuevas instancias de Obra con datos ingresados por teclado.
     - [ ] Validar claves foráneas mediante búsqueda ORM.
