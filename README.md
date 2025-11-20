@@ -38,12 +38,12 @@ python main.py
 - [X] `mapear_orm()` → crear tablas con `create_tables(list)`.
 - [X] `limpiar_datos()` → limpieza de nulos y datos incorrectos del DataFrame.
 - [X] `cargar_datos()` → persistir registros limpios en la BD usando `Model.create()`.
-- [ ] `nueva_obra()` → crear nuevas instancias de Obra con datos ingresados por teclado.
-    - [ ] Validar claves foráneas mediante búsqueda ORM.
-    - [ ] Informar y pedir reingreso si el valor no existe.
-    - [ ] Persistir con `save()`.
-    - [ ] Retornar la nueva instancia.
-- [ ] `obtener_indicadores()` → consultas ORM para obtener estadísticas.
+- [X] `nueva_obra()` → crear nuevas instancias de Obra con datos ingresados por teclado.
+    - [X] Validar claves foráneas mediante búsqueda ORM.
+    - [X] Informar y pedir reingreso si el valor no existe.
+    - [X] Persistir con `save()`.
+    - [X] Retornar la nueva instancia.
+- [] `obtener_indicadores()` → consultas ORM para obtener estadísticas.
 
 - [X] Terminar la normalizacion:
     - [X] Verificar columnas booleanas.
@@ -62,55 +62,55 @@ python main.py
 
 ## 4. Clase `Obra` (modelo ORM)
 Incluir métodos de instancia:
-- [ ] `nuevo_proyecto()`
-- [ ] `iniciar_contratacion()`
-- [ ] `adjudicar_obra()`
-- [ ] `iniciar_obra()`
-- [ ] `actualizar_porcentaje_avance()`
-- [ ] `incrementar_plazo()` (opcional)
-- [ ] `incrementar_mano_obra()` (opcional)
-- [ ] `finalizar_obra()`
-- [ ] `rescindir_obra()`
+- [X] `nuevo_proyecto()`
+- [X] `iniciar_contratacion()`
+- [X] `adjudicar_obra()`
+- [X] `iniciar_obra()`
+- [X] `actualizar_porcentaje_avance()`
+- [X] `incrementar_plazo()` (opcional)
+- [X] `incrementar_mano_obra()` (opcional)
+- [X] `finalizar_obra()`
+- [X] `rescindir_obra()`
 
 ## 5. Creación y manejo de obras
-- [ ] Crear al menos dos instancias de Obra usando `GestionarObra.nueva_obra()`.
-- [ ] Pasar cada obra por todas las etapas definidas, excepto las opcionales.
-- [ ] Luego de cada etapa, persistir cambios con `save()`.
+- [X] Crear al menos dos instancias de Obra usando `GestionarObra.nueva_obra()`.
+- [X] Pasar cada obra por todas las etapas definidas, excepto las opcionales.
+- [X] Luego de cada etapa, persistir cambios con `save()`.
 
 ## 6. Reglas específicas por etapa
-- [ ] `nuevo_proyecto()`:
-    - [ ] Asignar etapa inicial “Proyecto”.
-    - [ ] Crear etapa si no existe en BD.
-    - [ ] Usar valores existentes de tipo_obra, area_responsable y barrio.
-- [ ] `iniciar_contratacion()`:
-    - [ ] Asignar TipoContratacion existente en BD.
-    - [ ] Ingresar nro_contratacion.
-- [ ] `adjudicar_obra()`:
-    - [ ] Asignar Empresa existente en BD.
-    - [ ] Ingresar nro_expediente.
-- [ ] `iniciar_obra()`:
-    - [ ] Asignar: destacada, fecha_inicio, fecha_fin_inicial, fuente_financiamiento (existente), mano_obra.
-- [ ] `actualizar_porcentaje_avance()` → actualizar porcentaje.
-- [ ] `incrementar_plazo()` → actualizar plazo_meses (opcional).
-- [ ] `incrementar_mano_obra()` → actualizar mano_obra (opcional).
-- [ ] `finalizar_obra()`:
-    - [ ] etapa = "Finalizada"
-    - [ ] porcentaje_avance = 100
-- [ ] `rescindir_obra()`:
-    - [ ] etapa = "Rescindida"
+- [X] `nuevo_proyecto()`:
+    - [X] Asignar etapa inicial “Proyecto”.
+    - [X] Crear etapa si no existe en BD.
+    - [X] Usar valores existentes de tipo_obra, area_responsable y barrio.
+- [X] `iniciar_contratacion()`:
+    - [X] Asignar TipoContratacion existente en BD.
+    - [X] Ingresar nro_contratacion.
+- [X] `adjudicar_obra()`:
+    - [X] Asignar Empresa existente en BD.
+    - [X] Ingresar nro_expediente.
+- [X] `iniciar_obra()`:
+    - [X] Asignar: destacada, fecha_inicio, fecha_fin_inicial, fuente_financiamiento (existente), mano_obra.
+- [X] `actualizar_porcentaje_avance()` → actualizar porcentaje.
+- [X] `incrementar_plazo()` → actualizar plazo_meses (opcional).
+- [X] `incrementar_mano_obra()` → actualizar mano_obra (opcional).
+- [X] `finalizar_obra()`:
+    - [X] etapa = "Finalizada"
+    - [X] porcentaje_avance = 100
+- [X] `rescindir_obra()`:
+    - [X] etapa = "Rescindida"
 
 ## 7. Obtener indicadores antes de finalizar
 Ejecutar `GestionarObra.obtener_indicadores()` para mostrar:
-- [ ] Listado de áreas responsables.
+- [X] Listado de áreas responsables.
 - [ ] Listado de tipos de obra.
-- [ ] Cantidad de obras por etapa.
+- [X] Cantidad de obras por etapa.
 - [ ] Cantidad de obras y monto total por tipo de obra.
 - [ ] Listado de barrios de comunas 1, 2 y 3.
 - [ ] Cantidad de obras finalizadas en ≤ 24 meses.
-- [ ] Monto total de inversión.
+- [X] Monto total de inversión.
 
 ## 8. Aclaraciones
-- [ ] Todos los métodos de `GestionarObra` deben ser métodos de clase.
-- [ ] Atributos de clase cuando corresponda.
+- [X] Todos los métodos de `GestionarObra` deben ser métodos de clase.
+- [X] Atributos de clase cuando corresponda.
 - [ ] Incluir manejo de excepciones donde sea pertinente.
 

@@ -426,17 +426,6 @@ class GestionarObra:
                     return valor == "s"
                 print("Debe ingresar 's' o 'n'.")
 
-        def _input_datetime_opcional(mensaje):
-            while True:
-                valor = input(mensaje).strip()
-                formatos = ("%Y-%m-%d", "%Y-%m-%d %H:%M")
-                for fmt in formatos:
-                    try:
-                        return datetime.strptime(valor, fmt)
-                    except ValueError:
-                        pass
-                print("Formato inválido. Use 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM' o deje vacío.")
-
         def _pedir_fk(modelo, campo, nombre_modelo, texto_campo, obligatorio=True):
             opciones = modelo.select()
 
@@ -466,83 +455,27 @@ class GestionarObra:
 
                 print(f"No se encontró {nombre_modelo} con clave '{id}'. Intente nuevamente.\n")
 
-        def _pedir_barrio(obligatorio=True):
-            from modelo_orm import Barrio
-
-            barrios = Barrio.select()
-            if not barrios:
-                print("No hay registros de Barrio.")
-                return None if not obligatorio else None
-
-            print("\n--- Barrios disponibles ---")
-            for b in barrios:
-                print(f"{b.id}: {b.nombre} (comuna {b.comuna})")
-
-            while True:
-                id = input(
-                    f"Ingrese la clave del barrio-comuna"
-                    f"{' (vacío si no aplica)' if not obligatorio else ''}: "
-                ).strip()
-            
-                if not id and not obligatorio:
-                    return None
-
-                barrio = Barrio.get_or_none(
-                    (Barrio.id == id)
-                )
-                if barrio:
-                    return barrio
-
-                print(
-                    f"Clave barrio-comuna invalida'. "
-                    "Verifique los datos e intente nuevamente.\n"
-                )
-
-        
         nombre = _input_obligatorio("Nombre de la obra: ")
-        # expediente = _input_opcional("Expediente: ")
         descripcion = _input_opcional("Descripción: ")
         monto = _input_float_opcional("Monto del contrato (vacío si no aplica): ")
         direccion = _input_opcional("Dirección: ")
-
         latitud = _input_opcional("Latitud (texto, vacío si no aplica): ")
         longitud = _input_opcional("Longitud (texto, vacío si no aplica): ")
-
-        # fecha_inicio = _input_datetime_opcional("Fecha de inicio (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
-        # fecha_fin_inicial = _input_datetime_opcional("Fecha fin inicial (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
-
         plazo_meses = _input_float_opcional("Plazo en meses (vacío si no aplica): ")
         porcentaje_avance = 0
-
         imagen_1 = _input_opcional("URL imagen 1 (vacío si no aplica): ")
         imagen_2 = _input_opcional("URL imagen 2 (vacío si no aplica): ")
         imagen_3 = _input_opcional("URL imagen 3 (vacío si no aplica): ")
         imagen_4 = _input_opcional("URL imagen 4 (vacío si no aplica): ")
-
         licitacion_anio = _input_int_opcional("Año de licitación (entero, vacío si no aplica): ")
-        # nro_contratacion = _input_opcional("Número de contratación (vacío si no aplica): ")
-
         beneficiarios = _input_opcional("Beneficiarios (texto, vacío si no aplica): ")
-
         compromiso = _input_bool_obligatorio("¿Tiene compromiso?")
-        # destacada = _input_bool_obligatorio("¿Es destacada?")
         ba_elige = _input_bool_obligatorio("¿Es BA Elige?")
 
         link_interno = _input_opcional("Link interno (vacío si no aplica): ")
         pliego_descarga = _input_opcional("URL pliego descarga (vacío si no aplica): ")
         estudio_ambiental_descarga = _input_opcional("URL estudio ambiental (vacío si no aplica): ")
-
         entorno = _pedir_fk(Entorno, Entorno.tipo, "Entorno", "tipo", obligatorio=True)
-        # etapa = _pedir_fk(Etapa, Etapa.tipo, "Etapa", "tipo", obligatorio=False)
-        # tipo = _pedir_fk(TipoObra, TipoObra.tipo, "Tipo de Obra", "tipo", obligatorio=True)
-        # area_responsable = _pedir_fk(AreaResponsable, AreaResponsable.nombre, "Área Responsable", "nombre")
-        # barrio = _pedir_barrio(obligatorio=True)
-        # licitacion_oferta_empresa = _pedir_fk(EmpresaLicitacion, EmpresaLicitacion.razon_social,
-        #                                         "Empresa Licitación", "razón social")
-        # tipo_contratacion = _pedir_fk(TipoContratacion, TipoContratacion.tipo,
-        #                                 "Tipo de Contratación", "tipo")
-        # mano_obra, _ = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
-        # financiamiento = _pedir_fk(Financiera, Financiera.nombre, "Financiamiento", "nombre", obligatorio=False)
 
 
         obra = Obra(
@@ -567,6 +500,7 @@ class GestionarObra:
             estudio_ambiental_descarga=estudio_ambiental_descarga,
             entorno=entorno,
             destacada= False,
+
             # 1. nuevo_proyecto():
             etapa=None,
             tipo=None,
@@ -662,5 +596,16 @@ class GestionarObra:
         )
         for b in q_barrios:
             print(f"- {b.barrio.nombre}: {b.cant}")
+
+        comunas_filtrar = ["1", "2", "3"]
+
+        query = (Barrio
+         .select()
+         .where(Barrio.comuna.in_(comunas_filtrar))
+         .order_by(Barrio.comuna, Barrio.nombre))
+
+        print("\n--- Barrios de comunas 1, 2 y 3 ---\n")
+        for barrio in query:
+            print(f"Barrio: {barrio.nombre}  |  Comuna: {barrio.comuna}")
 
         print("\n===== FIN DE INDICADORES =====\n")
