@@ -50,7 +50,7 @@ class GestionarObra:
             "imagen_2",
             "imagen_3",
             "imagen_4",
-            "comuna"
+            "comuna",
             "licitacion_oferta_empresa",
             "contratacion_tipo",
             "nro_contratacion",
@@ -63,6 +63,7 @@ class GestionarObra:
             "expediente-numero",
             "estudio_ambiental_descarga",
             "financiamiento",
+            "mano_obra",
             "cuit_contratista"
         ]
 
@@ -85,7 +86,8 @@ class GestionarObra:
                             "no aplica": None,
                             "NO APLICA": None,
                             "-": None,
-                            "": None
+                            "": None,
+                            '.': None
                         }
                     )
                 )
@@ -113,7 +115,6 @@ class GestionarObra:
         columnas_numericas = [
             "plazo_meses",
             "licitacion_anio",
-            "mano_obra",
         ]
 
         for c in columnas_numericas:
@@ -228,7 +229,6 @@ class GestionarObra:
             ManoObra,
             Financiera,
             Obra,
-            EmpresaContratista
         )
 
         db.create_tables(
@@ -265,7 +265,6 @@ class GestionarObra:
             ManoObra,
             Financiera,
             Obra,
-            EmpresaContratista
         )
 
         self.conectar_db()
@@ -273,7 +272,7 @@ class GestionarObra:
         if self.df is None:
             raise RuntimeError("Primero ejecutá extraer_datos() y limpiar_datos()")
 
-        # df = self.df.iloc[::-1].reset_index(drop=True)
+        df = self.df
         # # NOTE damos vuelta el df para que a la hora de cargarse los datos, en las obras repetidas, se guarde solo la ultima creada y no la primera (que seguramente este desactualizada)
         print(" Iniciando carga de obras...")
 
@@ -370,75 +369,236 @@ class GestionarObra:
         print(f" Filas con error: {errores}")
         db.close()
 
+    @classmethod
+    def nueva_obra(self):
+        from datetime import datetime
 
-# def nueva_obra(self):
-
-#     from modelo_orm import (
-#         AreaResponsable, TipoObra, Barrio, Etapa,
-#         Empresa, TipoContratacion, FuenteFinanciamiento, Obra
-#     )
-
-#     self.conectar_db()
-
-#     print("\n=== CREAR NUEVA OBRA ===")
-
-
-#     expediente = input("Ingrese expediente: ").strip()
-#     descripcion = input("Ingrese descripción: ").strip()
-
-
-#     def pedir_fk(modelo, campo_nombre):
-
-#         while True:
-#             valor = input(f"Ingrese {campo_nombre}: ").strip()
-
-#             instancia = modelo.get_or_none(modelo.nombre == valor)
-
-#             if instancia:
-#                 return instancia
-
-#             print(f" {campo_nombre} '{valor}' no existe. Intente nuevamente.\n")
-
-#     area = pedir_fk(AreaResponsable, "Área Responsable")
-#     tipo = pedir_fk(TipoObra, "Tipo de Obra")
-#     barrio = pedir_fk(Barrio, "Barrio")
-#     etapa = pedir_fk(Etapa, "Etapa")
-#     empresa = pedir_fk(Empresa, "Empresa")
-#     tipo_contra = pedir_fk(TipoContratacion, "Tipo de Contratación")
-#     fuente = pedir_fk(FuenteFinanciamiento, "Fuente de Financiamiento")
+        from modelo_orm import (
+            Entorno,
+            Etapa,
+            TipoObra,
+            AreaResponsable,
+            Barrio,
+            EmpresaLicitacion,
+            EmpresaContratista,
+            TipoContratacion,
+            ManoObra,
+            Financiera,
+            Obra,
+            EmpresaContratista,
+        )
 
 
-#     try:
-#         monto = float(input("Monto del contrato: "))
-#     except:
-#         monto = None
+        def _input_obligatorio(mensaje):
+            while True:
+                valor = input(mensaje).strip()
+                if valor:
+                    return valor
+                print("Este valor es obligatorio. Intente nuevamente.")
 
-#     try:
-#         avance = int(input("Porcentaje de avance: "))
-#     except:
-#         avance = 0
+        def _input_opcional(mensaje):
+            valor = input(mensaje).strip()
+            return valor or None
 
-#     destacada = input("¿Es destacada? (SI/NO): ").upper() in ["SI", "SÍ", "TRUE"]
+        def _input_float_opcional(mensaje):
+            while True:
+                valor = input(mensaje).strip()
+                if not valor:
+                    return None
+                try:
+                    return float(valor.replace(",", "."))
+                except ValueError:
+                    print("Debe ser un número (usar . o , para decimales) o dejar vacío.")
+
+        def _input_int_opcional(mensaje):
+            while True:
+                valor = input(mensaje).strip()
+                if not valor:
+                    return None
+                try:
+                    return int(valor)
+                except ValueError:
+                    print("Debe ser un número entero o dejar vacío.")
+
+        def _input_bool_obligatorio(mensaje):
+            while True:
+                valor = input(mensaje + " [s/n]: ").strip().lower()
+                if valor in ("s", "n"):
+                    return valor == "s"
+                print("Debe ingresar 's' o 'n'.")
+
+        def _input_datetime_opcional(mensaje):
+            while True:
+                valor = input(mensaje).strip()
+                if not valor:
+                    return None
+
+                formatos = ("%Y-%m-%d", "%Y-%m-%d %H:%M")
+                for fmt in formatos:
+                    try:
+                        return datetime.strptime(valor, fmt)
+                    except ValueError:
+                        pass
+
+                print("Formato inválido. Use 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM' o deje vacío.")
+
+        def _pedir_fk(modelo, campo, nombre_modelo, texto_campo, obligatorio=True):
+            opciones = modelo.select()
+
+            if not opciones:
+                print(f"No hay registros en {nombre_modelo}.")
+                return None if not obligatorio else None
+
+            print(f"\n--- Seleccione {nombre_modelo} por ID")
+            
+            for o in opciones:
+                valor = getattr(o, campo.name)
+                print(f"ID {o.id}: {valor}")
+
+            while True:
+                id = input(f"Ingrese la clave de {nombre_modelo}"
+                            f"{' (vacío si no aplica)' if not obligatorio else ''}: ").strip()
+
+                if not id and not obligatorio:
+                    return None
+
+                if id.isdigit():
+                    instancia = modelo.get(modelo.id == int(id))
+                    print(instancia)
+                    if instancia:
+                        return instancia
+                    print("ID inválido.")
+
+                print(f"No se encontró {nombre_modelo} con clave '{id}'. Intente nuevamente.\n")
+
+        def _pedir_barrio(obligatorio=True):
+            from modelo_orm import Barrio
+
+            barrios = Barrio.select()
+            if not barrios:
+                print("No hay registros de Barrio.")
+                return None if not obligatorio else None
+
+            print("\n--- Barrios disponibles ---")
+            for b in barrios:
+                print(f"{b.id}: {b.nombre} (comuna {b.comuna})")
+
+            while True:
+                id = input(
+                    f"Ingrese la clave del barrio-comuna"
+                    f"{' (vacío si no aplica)' if not obligatorio else ''}: "
+                ).strip()
+            
+                if not id and not obligatorio:
+                    return None
+
+                barrio = Barrio.get_or_none(
+                    (Barrio.id == id)
+                )
+                if barrio:
+                    return barrio
+
+                print(
+                    f"Clave barrio-comuna invalida'. "
+                    "Verifique los datos e intente nuevamente.\n"
+                )
+
+        
+        nombre = _input_obligatorio("Nombre de la obra: ")
+        expediente = _input_opcional("Expediente: ")
+        descripcion = _input_opcional("Descripción: ")
+        monto = _input_float_opcional("Monto del contrato (vacío si no aplica): ")
+        direccion = _input_opcional("Dirección: ")
+
+        latitud = _input_opcional("Latitud (texto, vacío si no aplica): ")
+        longitud = _input_opcional("Longitud (texto, vacío si no aplica): ")
+
+        fecha_inicio = _input_datetime_opcional("Fecha de inicio (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
+        fecha_fin_inicial = _input_datetime_opcional("Fecha fin inicial (YYYY-MM-DD o YYYY-MM-DD HH:MM, vacío si no aplica): ")
+
+        plazo_meses = _input_float_opcional("Plazo en meses (vacío si no aplica): ")
+        porcentaje_avance = _input_int_opcional("Porcentaje de avance (0-100, vacío si no aplica): ")
+
+        imagen_1 = _input_opcional("URL imagen 1 (vacío si no aplica): ")
+        imagen_2 = _input_opcional("URL imagen 2 (vacío si no aplica): ")
+        imagen_3 = _input_opcional("URL imagen 3 (vacío si no aplica): ")
+        imagen_4 = _input_opcional("URL imagen 4 (vacío si no aplica): ")
+
+        licitacion_anio = _input_int_opcional("Año de licitación (entero, vacío si no aplica): ")
+        nro_contratacion = _input_opcional("Número de contratación (vacío si no aplica): ")
+
+        beneficiarios = _input_opcional("Beneficiarios (texto, vacío si no aplica): ")
+
+        compromiso = _input_bool_obligatorio("¿Tiene compromiso?")
+        destacada = _input_bool_obligatorio("¿Es destacada?")
+        ba_elige = _input_bool_obligatorio("¿Es BA Elige?")
+
+        link_interno = _input_opcional("Link interno (vacío si no aplica): ")
+        pliego_descarga = _input_opcional("URL pliego descarga (vacío si no aplica): ")
+        expediente_numero = _input_opcional("Número de expediente (vacío si no aplica): ")
+        estudio_ambiental_descarga = _input_opcional("URL estudio ambiental (vacío si no aplica): ")
+
+        entorno = _pedir_fk(Entorno, Entorno.tipo, "Entorno", "tipo", obligatorio=True)
+        etapa = _pedir_fk(Etapa, Etapa.tipo, "Etapa", "tipo", obligatorio=False)
+        tipo = _pedir_fk(TipoObra, TipoObra.tipo, "Tipo de Obra", "tipo", obligatorio=True)
+        area_responsable = _pedir_fk(AreaResponsable, AreaResponsable.nombre, "Área Responsable", "nombre")
+        barrio = _pedir_barrio(obligatorio=True)
+        licitacion_oferta_empresa = _pedir_fk(EmpresaLicitacion, EmpresaLicitacion.razon_social,
+                                                "Empresa Licitación", "razón social")
+        tipo_contratacion = _pedir_fk(TipoContratacion, TipoContratacion.tipo,
+                                        "Tipo de Contratación", "tipo")
+        mano_obra = ManoObra.get_or_create(dato=(input('Ingrese la mano de obra: \n')))
+        financiamiento = _pedir_fk(Financiera, Financiera.nombre, "Financiamiento", "nombre", obligatorio=False)
+        
 
 
-#     obra = Obra(
-#         expediente=expediente,
-#         descripcion=descripcion,
-#         area_responsable=area,
-#         tipo_obra=tipo,
-#         barrio=barrio,
-#         etapa=etapa,
-#         empresa=empresa,
-#         tipo_contratacion=tipo_contra,
-#         fuente_financiamiento=fuente,
-#         monto=monto,
-#         porcentaje_avance=avance,
-#         destacada=destacada
-#     )
 
-#     obra.save()
+        obra = Obra(
+            nombre=nombre,
+            expediente=expediente,
+            descripcion=descripcion,
+            monto=monto,
+            direccion=direccion,
+            latitud=latitud,
+            longitud=longitud,
+            fecha_inicio=fecha_inicio,
+            fecha_fin_inicial=fecha_fin_inicial,
+            plazo_meses=plazo_meses,
+            porcentaje_avance=porcentaje_avance,
+            imagen_1=imagen_1,
+            imagen_2=imagen_2,
+            imagen_3=imagen_3,
+            imagen_4=imagen_4,
+            licitacion_anio=licitacion_anio,
+            nro_contratacion=nro_contratacion,
+            beneficiarios=beneficiarios,
+            compromiso=compromiso,
+            destacada=destacada,
+            ba_elige=ba_elige,
+            link_interno=link_interno,
+            pliego_descarga=pliego_descarga,
+            expediente_numero=expediente_numero,
+            estudio_ambiental_descarga=estudio_ambiental_descarga,
+            entorno=entorno,
+            etapa=etapa,
+            tipo=tipo,
+            area_responsable=area_responsable,
+            barrio=barrio,
+            licitacion_oferta_empresa=licitacion_oferta_empresa,
+            tipo_contratacion=tipo_contratacion,
+            mano_obra=mano_obra,
+            financiamiento=financiamiento,
+        )
 
-#     print("\n Obra creada correctamente!")
-#     print(f"ID asignado: {obra.id}")
+        obra.save()
+        
 
-#     return obra
+        cuit_contratista = _input_opcional("CUIT de la empresa contratista (vacío si no aplica): ")
+        if cuit_contratista:
+            EmpresaContratista.get_or_create(
+                obra=obra,
+                cuit=cuit_contratista,
+            )
+
+        db.commit()
+        return obra

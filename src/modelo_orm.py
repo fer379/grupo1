@@ -89,20 +89,10 @@ class Obra(BaseModel):
     financiamiento = ForeignKeyField(Financiera, backref='obras', null=True)
 
 
-class EmpresaContratista(BaseModel):
-    id = AutoField()
-    obra = ForeignKeyField(Obra, backref="obra", on_delete="CASCADE")
-    cuit = CharField(null=True)
-    class Meta:
-        indexes = (
-            (('obra', 'cuit'), True),
-        )
-
-
-    def nuevo_proyecto(self):
-        etapa, _ = Etapa.get_or_create(nombre="Proyecto")
-        self.etapa = etapa
-        self.save()
+    # def nuevo_proyecto(self):
+    #     etapa, _ = Etapa.get_or_create(nombre="Proyecto")
+    #     self.etapa = etapa
+    #     self.save()
 
     # def iniciar_contratacion(self, tipo_contratacion, nro_contratacion):
     #     tc = TipoContratacion.get(TipoContratacion.nombre == tipo_contratacion)
@@ -152,4 +142,11 @@ class EmpresaContratista(BaseModel):
     #     self.etapa = etapa
     #     self.save()
 
-
+class EmpresaContratista(BaseModel):
+        id = AutoField()
+        obra = ForeignKeyField(Obra, backref="obra", on_delete="CASCADE")
+        cuit = CharField(null=True)
+        class Meta:
+            indexes = (
+                (('obra', 'cuit'), True),
+            )

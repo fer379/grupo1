@@ -33,14 +33,17 @@ def main():
     # GestionarObra.cargar_datos()
 
 
-    print("\n Obteniendo un registro ===")
-    print(obtenerRegistro(Obra, compromiso=True))
+    # print("\n Obteniendo un registro ===")
+    # print(obtenerRegistro(Obra, compromiso=True))
 
     # print("\n Obteniendo datos de tabla ===")
     # print(obtenerValoresTabla(Obra, compromiso=True))
 
     # GestionarObra.obtenerDf()
     # GestionarObra.extraer_datos()
+
+    # print(ManoObra.get(id = 32).dato)
+    print(GestionarObra.nueva_obra())
 
 if __name__ == "__main__":
     main()
