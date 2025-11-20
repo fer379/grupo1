@@ -1,10 +1,10 @@
 # Comandos para instalar librerias necesarias:
 ```
-pip install pandas numpy peewee python-dateutil
+pip install pandas numpy peewee python-dateutil ftfy
 ```  
 o  
 ```
-python -m pip install pandas numpy peewee python-dateutil
+python -m pip install pandas numpy peewee python-dateutil ftfy
 ```  
 para correr la aplicacion ejecutar el codigo en el archivo main.py, o mediante el comando en consola sobre /src/:
 ```
