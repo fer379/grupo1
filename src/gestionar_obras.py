@@ -99,12 +99,12 @@ class GestionarObra:
                 col = df[c].astype(str).str.strip().str.lower()
                 for m_es, m_num in meses_es.items():
                     col = col.str.replace(fr"^{m_es}-","1/" + m_num + "/" + "20", regex=True)
+                #  NOTE se normalizan esas fechas con formato 'mar-23', pasandolas al primer dia del y el mes de texto a numero utiliando los indices del array 'meses_es'
 
                 df[c] = pd.to_datetime(col, dayfirst=True, errors="coerce")
                 df[c] = (df[c].astype(str).replace('NaT', None))
 
         columnas_numericas = [
-            "monto_contrato",
             "plazo_meses",
             "porcentaje_avance",
             "licitacion_anio",
@@ -116,6 +116,60 @@ class GestionarObra:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip().str.replace('.', '').str.replace(",", ".", regex=False).str.replace('$', '').replace('%', '').replace('N/A', '').str.strip()
                 df[c] = pd.to_numeric(df[c], errors="coerce")
+                print(df.loc[1, "procentaje_avance"])
+
+        if 'monto_contrato' in df.columns:
+            df['monto_contrato'] = df['monto_contrato'].replace('.', None, regex=False).replace('', None, regex=False)
+            normal = (
+                df['monto_contrato']
+                .astype(str)
+                .str.replace('$', '', regex=False)
+                .str.strip()
+            )
+
+            # NOTE hay muchos formatos de montos en el csv
+
+            nuevo = normal.copy()
+            #  primero se agregan los que tienen un solo punto (ya tienen delimitado el decimal, quiza tengan comas)
+            mask_un_punto = normal.str.count(r'\.') == 1
+            nuevo.loc[mask_un_punto] = (
+                normal.loc[mask_un_punto]
+                .str.strip()
+            )
+
+            #  luego los que tienen una sola coma (coma en vez de punto para delimitar decimal)
+            mask_una_coma = normal.str.count(r'\,') == 1
+            nuevo.loc[mask_una_coma] = (
+                normal.loc[mask_una_coma]
+                .str.replace(',', '.', regex=False)
+                .str.strip()
+            )
+
+            #  luego los que tienen sus miles separados por comas, si tienen un punto se queda ya que delimita el decimal
+            mask_comas = normal.str.count(',') > 1
+            nuevo.loc[mask_comas] = (
+                normal.loc[mask_comas]
+                .str.replace(',', '', regex=False)
+                .str.strip()
+            )
+
+            #  luego los que tienen sus miles separados por puntos, se quitan y en caso que tengan coma se cambia por punto
+            mask_puntos = normal.str.count(r'\.') > 1
+            nuevo.loc[mask_puntos] = (
+                normal.loc[mask_puntos]
+                .str.replace('.', '', regex=False)
+                .str.replace(',', '.', regex=False)
+                .str.strip()
+            )
+            
+            #  finalmente parseamos a float y pasamos los nan a None para que queden null en la db
+            df['monto_contrato'] = pd.to_numeric(nuevo, errors='coerce')
+
+            df['monto_contrato'] = df['monto_contrato'].astype(object)
+            df.loc[pd.isna(df['monto_contrato']), 'monto_contrato'] = None
+
+
+
 
         for c in ["lat", "lng"]:
             if c in df.columns:

@@ -9,15 +9,16 @@ def main():
     # print("\n Extrayendo datos del CSV ===")
     df = GestionarObra.extraer_datos()
 
-    print(df.loc[1663,"fecha_fin_inicial"])
-    print(type(df.loc[1663,"fecha_fin_inicial"]))
+    # print(df.loc[1211,"comuna"])
+    # print(type(df.loc[1211,"comuna"]))
 
 
     print("\n Limpiando datos ===")
     df = GestionarObra.limpiar_datos()
 
-    print(df.loc[1663,"fecha_fin_inicial"])
-    print(type(df.loc[1663,"fecha_fin_inicial"]))
+    # print(df['monto_contrato'].value_counts(dropna=False)) 
+    # print(df.loc[1211,"comuna"])
+    # print(type(df.loc[1211,"comuna"]))
 
 
     # print("\n Creando tablas ORM ===")
